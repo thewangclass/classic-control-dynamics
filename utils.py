@@ -19,5 +19,5 @@ def runge_kutta(dynamics_f, state, action, dt):
     k2 = dynamics_f(state + 0.5 * dt * k1, action)
     k3 = dynamics_f(state + 0.5 * dt * k2, action)
     k4 = dynamics_f(state + dt * k3, action)
-    update = (k1 + 2 * k2 + 2 * k3 + k4) * dt / 6
-    return update
+    next_state = state + (k1 + 2 * k2 + 2 * k3 + k4) * dt / 6
+    return next_state

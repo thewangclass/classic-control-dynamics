@@ -93,33 +93,16 @@ class CartPole():
         assert self.state is not None, "Call reset before step"
 
         force = self.force_mag if action == 1 else -self.force_mag
-        theta_acc = self.calc_theta_acc(1, force)
-        x_acc = self.calc_x_acc(1, force)
-        
+        self.state = rk4(self.dynamics_cartpole, self.state, force, self.tau)
 
+
+    def dynamics_cartpole(self, current_state, action):
         # current state is comprised of x, x_dot, theta, theta_dot
         # change in each of these is x_dot, x_acc, theta_dot, theta_acc
-        # call rk4 integration to numerically integrate and approximate solutions
-        change_in_x = rk4(self.calc_x_vel, self.state[1], force, self.tau)
-        change_in_x_dot = rk4(self.calc_x_acc, x_acc, force, self.tau)
-        change_in_theta = rk4(self.calc_theta_vel, self.state[3], force, self.tau)
-        change_in_theta_dot = rk4(self.calc_theta_acc, theta_acc, force, self.tau)
+        x, x_dot, theta, theta_dot = current_state
+        return np.array([x_dot, self.calc_x_acc(action), theta_dot, self.calc_theta_acc(action)])
 
-        new_state = np.array([
-            self.state[0] + change_in_x,
-            self.state[1] + change_in_x_dot,
-            self.state[2] + change_in_theta,
-            self.state[3] + change_in_theta_dot
-        ])
-        self.state = new_state
-
-    def calc_x_vel(self, x_dot, force):
-        return x_dot + self.tau*self.x_acc
-
-    def calc_theta_vel(self, theta_dot, force):
-        return theta_dot + self.tau*self.theta_acc
-
-    def calc_theta_acc(self, theta_acc, force):
+    def calc_theta_acc(self, force):
         # Get position, velocity, angle, and angular velocity from state
         x, x_dot, theta, theta_dot = self.state
         costheta = math.cos(theta)
@@ -164,7 +147,7 @@ class CartPole():
         self.theta_acc = theta_acc
         return theta_acc
 
-    def calc_x_acc(self, x_acc, force):
+    def calc_x_acc(self, force):
         # Get position, velocity, angle, and angular velocity from state
         x, x_dot, theta, theta_dot = self.state
         costheta = math.cos(theta)
@@ -179,8 +162,12 @@ class CartPole():
 
 if __name__ == '__main__':
     cart = CartPole()
-    print(cart.reset())
+    cart.reset()
     print("testing")
     print("Current state: {}".format(cart.state))
     cart.step(1)
     print("State after applying  {0}N force for {1}seconds: {2}".format(cart.force_mag, cart.tau, cart.state))
+    cart.step(1)
+    print("State after applying  -{0}N force for {1}seconds: {2}".format(cart.force_mag, cart.tau, cart.state))
+    cart.step(1)
+    print("State after applying  -{0}N force for {1}seconds: {2}".format(cart.force_mag, cart.tau, cart.state))

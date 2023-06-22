@@ -1,6 +1,7 @@
 """
 Classic cart-pole system implemented by Rich Sutton et al.
-Used from https://github.com/Farama-Foundation/Gymnasium/blob/main/gymnasium/envs/classic_control/cartpole.py and https://perma.cc/C9ZM-652R
+Framework from: https://github.com/Farama-Foundation/Gymnasium/blob/main/gymnasium/envs/classic_control/cartpole.py
+Dynamics from: https://coneural.org/florian/papers/05_cart_pole.pdf
 
 """
 import math
@@ -42,7 +43,7 @@ class CartPole():
         self.theta_threshold_radians = 12 * 2 * math.pi / 360
         # Left/right bounds of space: leaving these boundaries means failure
         self.x_threshold = 2.4
-
+        self.steps_beyond_terminated = None
         
 
         # Possible actions the cartpole can take
@@ -84,6 +85,7 @@ class CartPole():
         high = 0.05    
         low = -high     
         self.state = np.random.uniform(low=low, high=high, size=(4,)).astype(np.float32)
+        self.steps_beyond_terminated = None
         return np.array(self.state, dtype=np.float32)
 
 
@@ -94,6 +96,31 @@ class CartPole():
 
         force = self.force_mag if action == 1 else -self.force_mag
         self.state = rk4(self.dynamics_cartpole, self.state, force, self.tau)
+
+        x = self.state[0]
+        theta = self.state[2]
+        # check if episode ends due to termination
+        terminated = bool(
+            x < -self.x_threshold
+            or x > self.x_threshold
+            or theta < -self.theta_threshold_radians
+            or theta > self.theta_threshold_radians
+        )
+
+        if not terminated:
+            reward = 1.0
+        elif self.steps_beyond_terminated is None:
+            # Pole just fell!
+            self.steps_beyond_terminated = 0
+            reward = 1.0
+        else:
+            # arrives here only if terminated = True and steps_beyond_terminated is not None
+            self.steps_beyond_terminated += 1
+            reward = 0.0
+        
+        # for now, we have step return same thing as gymnasium does
+        # next_state, reward, terminated, truncated, info
+        return np.array(self.state, dtype=np.float32), reward, terminated, False, {}
 
 
     def dynamics_cartpole(self, current_state, action):
@@ -170,7 +197,7 @@ if __name__ == '__main__':
     print("Current state: {}".format(cart.state))
     cart.step(1)
     print("State after applying  {0}N force for {1}seconds: {2}".format(cart.force_mag, cart.tau, cart.state))
-    cart.step(0)
-    print("State after applying  -{0}N force for {1}seconds: {2}".format(cart.force_mag, cart.tau, cart.state))
+    cart.step(1)
+    print("State after applying  {0}N force for {1}seconds: {2}".format(cart.force_mag, cart.tau, cart.state))
     cart.step(1)
     print("State after applying  {0}N force for {1}seconds: {2}".format(cart.force_mag, cart.tau, cart.state))

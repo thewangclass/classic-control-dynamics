@@ -30,8 +30,8 @@ class CartPole():
         self.force_normal_cart = 1
 
         # acceleration calculations
-        self.theta_acc = 0
-        self.x_acc = 0
+        self.theta_acc = None
+        self.x_acc = None
 
         # metadata lists "render_fps" as 50. This is where the tau value of 0.02 comes from because 50 frames per second results in 1/50 which is 0.02 seconds per frame.
         self.tau = 0.02  # seconds between state updates, our delta_t
@@ -148,6 +148,8 @@ class CartPole():
         return theta_acc
 
     def calc_x_acc(self, force):
+        self.calc_theta_acc(force)
+
         # Get position, velocity, angle, and angular velocity from state
         x, x_dot, theta, theta_dot = self.state
         costheta = math.cos(theta)
@@ -156,6 +158,7 @@ class CartPole():
         x_acc = (force + self.masspole * self.length * (theta_dot**2 * sintheta - self.theta_acc * costheta) - (self.mu_cart * self.force_normal_cart * get_sign(self.force_normal_cart * x_dot))) / self.mass_total
 
         self.x_acc = x_acc
+        self.theta_acc = None
         return x_acc
         
              
@@ -167,7 +170,7 @@ if __name__ == '__main__':
     print("Current state: {}".format(cart.state))
     cart.step(1)
     print("State after applying  {0}N force for {1}seconds: {2}".format(cart.force_mag, cart.tau, cart.state))
-    cart.step(1)
+    cart.step(0)
     print("State after applying  -{0}N force for {1}seconds: {2}".format(cart.force_mag, cart.tau, cart.state))
     cart.step(1)
-    print("State after applying  -{0}N force for {1}seconds: {2}".format(cart.force_mag, cart.tau, cart.state))
+    print("State after applying  {0}N force for {1}seconds: {2}".format(cart.force_mag, cart.tau, cart.state))

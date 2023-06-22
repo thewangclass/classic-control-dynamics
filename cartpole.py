@@ -34,7 +34,7 @@ class CartPole():
         self.x_acc = 0
 
         # metadata lists "render_fps" as 50. This is where the tau value of 0.02 comes from because 50 frames per second results in 1/50 which is 0.02 seconds per frame.
-        self.tau = 1  # seconds between state updates, our delta_t
+        self.tau = 0.02  # seconds between state updates, our delta_t
 
         self.kinematics_integrator = "rk4"  # we use rk4 for our integration
 
@@ -93,43 +93,33 @@ class CartPole():
         assert self.state is not None, "Call reset before step"
 
         force = self.force_mag if action == 1 else -self.force_mag
-        theta_acc = self.calc_theta_acc(force)
-        x_acc = self.calc_x_acc(force)
+        theta_acc = self.calc_theta_acc(1, force)
+        x_acc = self.calc_x_acc(1, force)
         
 
         # current state is comprised of x, x_dot, theta, theta_dot
         # change in each of these is x_dot, x_acc, theta_dot, theta_acc
         # call rk4 integration to numerically integrate and approximate solutions
-        print("Initial x position: {}".format(self.state[0]))
-        print("Initial x velocity: {}".format(self.state[1]))
-        print("Initial x acc = {}".format(x_acc))
         change_in_x = rk4(self.calc_x_vel, self.state[1], force, self.tau)
-        # change_in_x_dot = rk4(self.calc_x_acc, self, force, self.tau)
-        # change_in_theta = rk4(self.calc_theta_vel, self, force, self.tau)
-        # change_in_theta_dot = rk4(self.calc_theta_acc, self, force, self.tau)
-        
-        print("x velocity approx by rk4: {}".format(change_in_x))
+        change_in_x_dot = rk4(self.calc_x_acc, x_acc, force, self.tau)
+        change_in_theta = rk4(self.calc_theta_vel, self.state[3], force, self.tau)
+        change_in_theta_dot = rk4(self.calc_theta_acc, theta_acc, force, self.tau)
 
-
-        # # Implement rk4 integration using https://en.wikipedia.org/wiki/Runge%E2%80%93Kutta_methods
-        # # scipy.integrate.RK45
-        # # Need k1, k2, k3, k4 which represents velocity at current time step, +
-        # k1 = x_dot                          # change in variable (slope) at current time
-        # k2 = x_dot + 0.5*self.tau*k1        # slope at midpoint of interval, using y and k1
-        # k3 = x_dot + 0.5*self.tau*k2        # slope at midpoint of interval, using y and k2
-        # k4 = x_dot + self.tau*k3            # slope at end of interval
-        # x = x + self.tau/6 * (k1 + 2*(k2 + k3) + k4)
+        new_state = np.array([
+            self.state[0] + change_in_x,
+            self.state[1] + change_in_x_dot,
+            self.state[2] + change_in_theta,
+            self.state[3] + change_in_theta_dot
+        ])
+        self.state = new_state
 
     def calc_x_vel(self, x_dot, force):
         return x_dot + self.tau*self.x_acc
-        pass
 
-
-    def calc_theta_vel(self, state, force):
-        x, x_dot, theta, theta_dot = self.state
+    def calc_theta_vel(self, theta_dot, force):
         return theta_dot + self.tau*self.theta_acc
 
-    def calc_theta_acc(self, force):
+    def calc_theta_acc(self, theta_acc, force):
         # Get position, velocity, angle, and angular velocity from state
         x, x_dot, theta, theta_dot = self.state
         costheta = math.cos(theta)
@@ -174,7 +164,7 @@ class CartPole():
         self.theta_acc = theta_acc
         return theta_acc
 
-    def calc_x_acc(self, force):
+    def calc_x_acc(self, x_acc, force):
         # Get position, velocity, angle, and angular velocity from state
         x, x_dot, theta, theta_dot = self.state
         costheta = math.cos(theta)
@@ -189,7 +179,8 @@ class CartPole():
 
 if __name__ == '__main__':
     cart = CartPole()
-    print(cart.state)
     print(cart.reset())
     print("testing")
+    print("Current state: {}".format(cart.state))
     cart.step(1)
+    print("State after applying  {0}N force for {1}seconds: {2}".format(cart.force_mag, cart.tau, cart.state))

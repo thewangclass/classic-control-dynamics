@@ -118,6 +118,7 @@ class CartPole():
         assert self.state is not None, "Call reset before step"
 
         force = self.force_mag if action == 1 else -self.force_mag
+        self.calc_x_acc(force)  # this updates theta_acc first to be used in x_acc calculation
         self.state = rk4(self.dynamics_cartpole, self.state, force, self.tau)
 
         x = self.state[0]
@@ -150,7 +151,7 @@ class CartPole():
         # current state is comprised of x, x_dot, theta, theta_dot
         # change in each of these is x_dot, x_acc, theta_dot, theta_acc
         x, x_dot, theta, theta_dot = current_state
-        return np.array([x_dot, self.calc_x_acc(action), theta_dot, self.calc_theta_acc(action)])
+        return np.array([x, x_dot, theta, theta_dot])
 
     def calc_theta_acc(self, force):
         # Get position, velocity, angle, and angular velocity from state
@@ -208,7 +209,6 @@ class CartPole():
         x_acc = (force + self.masspole * self.length * (theta_dot**2 * sintheta - self.theta_acc * costheta) - (self.mu_cart * self.force_normal_cart * get_sign(self.force_normal_cart * x_dot))) / self.mass_total
 
         self.x_acc = x_acc
-        self.theta_acc = None
         return x_acc
         
              

@@ -86,7 +86,7 @@ class CartPole():
         # Angle limit set to 2 * theta_threshold_radians so failing observation
         # is still within bounds.
         # Really these should be called upper and lower bounds.
-        high = np.array(
+        self.upper_bound = np.array(
             [
                 self.x_threshold * 2,
                 np.inf,    # np.finfo(np.float32).max,
@@ -95,7 +95,7 @@ class CartPole():
             ],
             dtype=np.float32,
         )
-        low = -high
+        self.lower_bound = -self.upper_bound
 
         # CartPole represented by (CartPosition, CartVelocity, PoleAngle, PoleAngVelocity)
         # Starting state is initialized randomly in reset()

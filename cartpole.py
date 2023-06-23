@@ -85,6 +85,7 @@ class CartPole():
 
         # Angle limit set to 2 * theta_threshold_radians so failing observation
         # is still within bounds.
+        # Really these should be called upper and lower bounds.
         high = np.array(
             [
                 self.x_threshold * 2,
@@ -106,10 +107,11 @@ class CartPole():
         High is given an initial default value. Default value is taken from gymnasium cartpole.py. This is to provide some variation in the starting state and make the model learn a more generalizable policy.
         """
         high = 0.05    
-        low = -high     
+        low = -high    
         self.state = np.random.uniform(low=low, high=high, size=(4,)).astype(np.float32)
         self.steps_beyond_terminated = None
-        return np.array(self.state, dtype=np.float32)
+
+        return self.state
 
 
     def step(self, action):

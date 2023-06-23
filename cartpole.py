@@ -50,6 +50,8 @@ class CartPole():
 
 
     def __init__(self) -> None:
+        self.max_episode_steps = 500    # going over this causes truncation
+
         self.gravity = 9.8
         self.masscart = 1.0
         self.masspole = 0.1
@@ -76,6 +78,9 @@ class CartPole():
         self.theta_threshold_radians = 12 * 2 * math.pi / 360
         # Left/right bounds of space: leaving these boundaries means failure
         self.x_threshold = 2.4
+
+        # episode ending possibilities
+        self.steps = 0
         self.steps_beyond_terminated = None
         
 
@@ -109,7 +114,9 @@ class CartPole():
         high = 0.05    
         low = -high    
         self.state = np.random.uniform(low=low, high=high, size=(4,)).astype(np.float32)
+
         self.steps_beyond_terminated = None
+        self.steps = 0
 
         return self.state
 
@@ -133,6 +140,9 @@ class CartPole():
             or theta > self.theta_threshold_radians
         )
 
+        self.steps += 1
+        truncated = self.steps >= self.max_episode_steps
+
         if not terminated:
             reward = 1.0
         elif self.steps_beyond_terminated is None:
@@ -146,7 +156,7 @@ class CartPole():
         
         # for now, we have step return same thing as gymnasium does
         # next_state, reward, terminated, truncated, info
-        return np.array(self.state, dtype=np.float32), reward, terminated, False, {}
+        return np.array(self.state, dtype=np.float32), reward, terminated, truncated, {}
 
 
     def dynamics_cartpole(self, current_state, action):

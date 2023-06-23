@@ -120,10 +120,10 @@ class Acrobot():
         self.action_space = {0, 1, 2}
 
         # Consider renaming these variables as bounds
-        high = np.array(
+        self.upper_bound = np.array(
             [1.0, 1.0, 1.0, 1.0, self.max_vel_1, self.max_vel_2], dtype=np.float32
         )
-        low = -high
+        self.lower_bound = -self.upper_bound
 
         self.state = None
 

@@ -113,6 +113,13 @@ class Acrobot():
         self.avail_torque = [-1.0, 0.0, +1]
         self.torque_noise_max = 0.0
 
+        # Possible actions the acrobot can take
+        # 0: apply -1 torque to the actuated joint
+        # 1: apply 0 torque to the actuated joint
+        # 2: apply 1 torque to the actuated joint
+        self.action_space = {0, 1, 2}
+
+        # Consider renaming these variables as bounds
         high = np.array(
             [1.0, 1.0, 1.0, 1.0, self.max_vel_1, self.max_vel_2], dtype=np.float32
         )
@@ -134,6 +141,15 @@ class Acrobot():
         )
 
         return self.state
+    
+
+    def step(self, action):
+        # Make sure valid action and state are present
+        assert action in self.action_space, f"invalid action chosen: {action}"
+        assert self.state is not None, "Call reset before step"
+        
+        torque = self.avail_torque[action]  # -1, 0, 1
+
 
 
 if __name__ == '__main__':

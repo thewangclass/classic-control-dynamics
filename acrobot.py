@@ -57,26 +57,24 @@ class Acrobot():
 
     ## Observation Space
 
-    The observation is a `ndarray` with shape `(6,)` that provides information about the
-    two rotational joint angles as well as their angular velocities:
+    The observation is a `ndarray` with shape `(4,)` that provides information about the two rotational joint angles as well as their angular velocities:
 
     | Num | Observation                  | Min                 | Max               |
     |-----|------------------------------|---------------------|-------------------|
-    | 0   | Cosine of `theta1`           | -1                  | 1                 |
-    | 1   | Sine of `theta1`             | -1                  | 1                 |
-    | 2   | Cosine of `theta2`           | -1                  | 1                 |
-    | 3   | Sine of `theta2`             | -1                  | 1                 |
-    | 4   | Angular velocity of `theta1` | ~ -12.567 (-4 * pi) | ~ 12.567 (4 * pi) |
-    | 5   | Angular velocity of `theta2` | ~ -28.274 (-9 * pi) | ~ 28.274 (9 * pi) |
+    | 0   | `theta1`                     | -pi                 | pi                |
+    | 1   | Cosine of `theta2`           | -pi                 | pi                |
+    | 2   | Angular velocity of `theta1` | ~ -12.567 (-4 * pi) | ~ 12.567 (4 * pi) |
+    | 3   | Angular velocity of `theta2` | ~ -28.274 (-9 * pi) | ~ 28.274 (9 * pi) |
 
     where
     - `theta1` is the angle of the first joint, where an angle of 0 indicates the first link is pointing directly
     downwards.
     - `theta2` is ***relative to the angle of the first link.***
-        An angle of 0 corresponds to having the same angle between the two links.
+    An angle of 0 corresponds to having the same angle between the two links.
 
     The angular velocities of `theta1` and `theta2` are bounded at ±4π, and ±9π rad/s respectively.
-    A state of `[1, 0, 1, 0, ..., ...]` indicates that both links are pointing downwards.
+    
+    Note: we follow https://github.com/rlpy/rlpy/blob/master/rlpy/Domains/Acrobot.py when defining the state space, not the one in gymnasium where they use a (6,) ndarray.
 
     ## Rewards
 
@@ -121,7 +119,7 @@ class Acrobot():
 
         # Consider renaming these variables as bounds
         self.upper_bound = np.array(
-            [1.0, 1.0, 1.0, 1.0, self.max_vel_1, self.max_vel_2], dtype=np.float32
+            [np.pi, np.pi, self.max_vel_1, self.max_vel_2], dtype=np.float32
         )
         self.lower_bound = -self.upper_bound
 
@@ -135,10 +133,8 @@ class Acrobot():
         high = 0.1
         low = -high
 
-        theta1, theta2, theta1_dot, theta2_dot = np.random.uniform(low=low, high=high, size=(4,)).astype(np.float32)
-        self.state = np.array(
-            [cos(theta1), sin(theta1), cos(theta2), sin(theta2), theta1_dot, theta2_dot], dtype=np.float32     
-        )
+        self.state = np.random.uniform(low=low, high=high, size=(4,)).astype(np.float32)
+        self.steps_beyond_terminated = None
 
         return self.state
     
@@ -147,8 +143,16 @@ class Acrobot():
         # Make sure valid action and state are present
         assert action in self.action_space, f"invalid action chosen: {action}"
         assert self.state is not None, "Call reset before step"
+
+        # Grab current state
+        current_state = self.state
         
+        # torque is determined by the action chosen
         torque = self.avail_torque[action]  # -1, 0, 1
+        if self.torque_noise_max > 0:       # add random noise to torque
+            torque += self.np_random.uniform(
+                -self.torque_noise_max, self.torque_noise_max
+            )
 
 
 

@@ -7,7 +7,7 @@ import math
 import numpy as np
 
 from numpy import cos, pi, sin
-from utils import get_sign
+from utils import get_sign, wrap, bound
 from utils import runge_kutta as rk4
 
 
@@ -62,7 +62,7 @@ class Acrobot():
     | Num | Observation                  | Min                 | Max               |
     |-----|------------------------------|---------------------|-------------------|
     | 0   | `theta1`                     | -pi                 | pi                |
-    | 1   | Cosine of `theta2`           | -pi                 | pi                |
+    | 1   | `theta2`                     | -pi                 | pi                |
     | 2   | Angular velocity of `theta1` | ~ -12.567 (-4 * pi) | ~ 12.567 (4 * pi) |
     | 3   | Angular velocity of `theta2` | ~ -28.274 (-9 * pi) | ~ 28.274 (9 * pi) |
 
@@ -97,6 +97,9 @@ class Acrobot():
 """
 
     def __init__(self):
+        self.max_episode_steps = 500 # going over this causes truncation
+
+        self.gravity = 9.8
         self.link_length_1 = 1.0    # [m]
         self.link_length_2 = 1.0    # [m]
         self.link_mass_1 = 1.0      # [kg] mass of link 1
@@ -111,11 +114,17 @@ class Acrobot():
         self.avail_torque = [-1.0, 0.0, +1]
         self.torque_noise_max = 0.0
 
+        # episode ending possibilities
+        self.steps = 0
+
         # Possible actions the acrobot can take
         # 0: apply -1 torque to the actuated joint
         # 1: apply 0 torque to the actuated joint
         # 2: apply 1 torque to the actuated joint
         self.action_space = {0, 1, 2}
+
+        # timestep
+        self.tau = 0.02
 
         # Consider renaming these variables as bounds
         self.upper_bound = np.array(
@@ -138,26 +147,82 @@ class Acrobot():
 
         return self.state
     
-
+    
     def step(self, action):
         # Make sure valid action and state are present
-        assert action in self.action_space, f"invalid action chosen: {action}"
         assert self.state is not None, "Call reset before step"
 
         # Grab current state
         current_state = self.state
-        
-        # torque is determined by the action chosen
-        torque = self.avail_torque[action]  # -1, 0, 1
+        torque = self.avail_torque[action]  # # torque is determined by the action chosen: -1, 0, 1
         if self.torque_noise_max > 0:       # add random noise to torque
             torque += self.np_random.uniform(
                 -self.torque_noise_max, self.torque_noise_max
             )
+        
+        ns = rk4(self.dynamics_acrobot, self.state, torque, self.tau)
+        ns[0] = wrap(ns[0], -pi, pi)
+        ns[1] = wrap(ns[1], -pi, pi)
+        ns[2] = bound(ns[2], -self.max_vel_1, self.max_vel_1)
+        ns[3] = bound(ns[3], -self.max_vel_2, self.max_vel_2)
+        self.state = ns
 
+        # Check if terminated or truncated
+        terminated = self._terminal()
+        reward = -1.0 if not terminated else 0.0
+        truncated = self.steps >= self.max_episode_steps
+
+        return np.array(self.state, dtype=np.float32), reward, terminated, truncated, {}
+
+    def dynamics_acrobot(self, current_state, action):
+        m1 = self.link_mass_1
+        m2 = self.link_mass_2
+        l1 = self.link_length_1
+        lc1 = self.link_com_pos_1
+        lc2 = self.link_com_pos_2
+        I1 = self.link_moi
+        I2 = self.link_moi
+        g = self.gravity
+        a = action
+        s = current_state
+
+        theta1 = s[0]
+        theta2 = s[1]
+        dtheta1 = s[2]
+        dtheta2 = s[3]
+        d1 = (
+            m1 * lc1**2
+            + m2 * (l1**2 + lc2**2 + 2 * l1 * lc2 * cos(theta2))
+            + I1
+            + I2
+        )
+        d2 = m2 * (lc2**2 + l1 * lc2 * cos(theta2)) + I2
+        phi2 = m2 * lc2 * g * cos(theta1 + theta2 - pi / 2.0)
+        phi1 = (
+            -m2 * l1 * lc2 * dtheta2**2 * sin(theta2)
+            - 2 * m2 * l1 * lc2 * dtheta2 * dtheta1 * sin(theta2)
+            + (m1 * lc1 + m2 * l1) * g * cos(theta1 - pi / 2)
+            + phi2
+        )
+        ddtheta2 = (
+            a + d2 / d1 * phi1 - m2 * l1 * lc2 * dtheta1**2 * sin(theta2) - phi2
+        ) / (m2 * lc2**2 + I2 - d2**2 / d1)
+        ddtheta1 = -(d2 * ddtheta2 + phi1) / d1
+        return np.array([dtheta1, dtheta2, ddtheta1, ddtheta2], dtype=np.float32)
+
+    
+    def _terminal(self):
+        s = self.state
+        assert s is not None, "Call reset before using AcrobotEnv object."
+        return bool(-cos(s[0]) - cos(s[1] + s[0]) > 1.0)
 
 
 if __name__ == '__main__':
     abot = Acrobot()
     abot.reset()
     print("testing")
-    print("Current state: {}".format(abot.state))
+    print("Current state: {}\n".format(abot.state))
+
+    t=2
+    abot.step(t)
+    print("State after applying  {0}Nm torque for {1}seconds: {2}\n".format(abot.avail_torque[t], abot.tau, abot.state))

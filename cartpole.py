@@ -71,7 +71,6 @@ class CartPole():
 
         # metadata lists "render_fps" as 50. This is where the tau value of 0.02 comes from because 50 frames per second results in 1/50 which is 0.02 seconds per frame.
         self.tau = 0.02  # seconds between state updates, our delta_t
-
         self.kinematics_integrator = "rk4"  # we use rk4 for our integration
 
         # Angle at which to fail the episode: pole below this angle means failure
@@ -111,7 +110,7 @@ class CartPole():
         Reset initial state for next session.
         High is given an initial default value. Default value is taken from gymnasium cartpole.py. This is to provide some variation in the starting state and make the model learn a more generalizable policy.
         """
-        high = 0.05    
+        high = 0.01    
         low = -high    
         self.state = np.random.uniform(low=low, high=high, size=(4,)).astype(np.float32)
 
@@ -127,7 +126,8 @@ class CartPole():
         assert self.state is not None, "Call reset before step"
 
         force = self.force_mag if action == 1 else -self.force_mag
-        self.calc_x_acc(force)  # this updates theta_acc first to be used in x_acc calculation
+        self.calc_x_acc(force)  # calc_x_acc updates theta_acc first to be used in x_acc calculation
+        print("x_acc is: {0}, \ntheta_acc is: {1}".format(self.x_acc, self.theta_acc))
         self.state = rk4(self.dynamics_cartpole, self.state, force, self.tau)
 
         x = self.state[0]
@@ -163,8 +163,8 @@ class CartPole():
         # current state is comprised of x, x_dot, theta, theta_dot
         # change in each of these is x_dot, x_acc, theta_dot, theta_acc
         x, x_dot, theta, theta_dot = current_state
-        return np.array([x, x_dot, theta, theta_dot])
-
+        return np.array([x_dot, self.x_acc, theta_dot, self.theta_acc], dtype=np.float32)
+    
     def calc_theta_acc(self, force):
         # Get position, velocity, angle, and angular velocity from state
         x, x_dot, theta, theta_dot = self.state
@@ -175,12 +175,13 @@ class CartPole():
         force_normal_cart = self.force_normal_cart
 
         theta_acc = (self.gravity*sintheta * costheta*(
-                (
-                    (-force - self.masspole*self.length*theta_dot**22*(
-                    sintheta + self.mu_cart*get_sign(force_normal_cart*x_dot)*costheta
-                    )) / self.mass_total    
-                ) + self.mu_cart*self.gravity*get_sign(force_normal_cart*x_dot)
-            ) - (self.mu_pole*theta_dot)/(self.masspole*self.length))
+                            (
+                                (-force - self.masspole*self.length*theta_dot**2*(
+                                sintheta + self.mu_cart*get_sign(force_normal_cart*x_dot)*costheta
+                                )) / self.mass_total    
+                            ) + self.mu_cart*self.gravity*get_sign(force_normal_cart*x_dot)
+                        ) - (self.mu_pole*theta_dot)/(self.masspole*self.length)
+                    )
 
         theta_acc = theta_acc / (self.length * 
                                     (4.0/3.0 - (self.masspole*costheta/self.mass_total)*
@@ -229,10 +230,10 @@ if __name__ == '__main__':
     cart = CartPole()
     cart.reset()
     print("testing")
-    print("Current state: {}".format(cart.state))
+    print("Current state: {}\n".format(cart.state))
     cart.step(1)
-    print("State after applying  {0}N force for {1}seconds: {2}".format(cart.force_mag, cart.tau, cart.state))
+    print("State after applying  {0}N force for {1}seconds: {2}\n".format(cart.force_mag, cart.tau, cart.state))
     cart.step(1)
-    print("State after applying  {0}N force for {1}seconds: {2}".format(cart.force_mag, cart.tau, cart.state))
+    print("State after applying  {0}N force for {1}seconds: {2}\n".format(cart.force_mag, cart.tau, cart.state))
     cart.step(1)
-    print("State after applying  {0}N force for {1}seconds: {2}".format(cart.force_mag, cart.tau, cart.state))
+    print("State after applying  {0}N force for {1}seconds: {2}\n".format(cart.force_mag, cart.tau, cart.state))

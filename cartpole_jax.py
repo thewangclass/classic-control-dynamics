@@ -4,6 +4,7 @@ Framework from: https://github.com/Farama-Foundation/Gymnasium/blob/main/gymnasi
 Dynamics from: https://coneural.org/florian/papers/05_cart_pole.pdf
 
 """
+import time 
 import math
 import numpy as np
 import jax.numpy as jnp
@@ -133,8 +134,8 @@ class CartPole():
         self.calc_x_acc(force)  # calc_x_acc updates theta_acc first to be used in x_acc calculation
         print("x_acc is: {0}, \ntheta_acc is: {1}".format(self.x_acc, self.theta_acc))
 
-        rk4_compiled = jit(rk4)
-        self.state = rk4_compiled(self.dynamics_cartpole, self.state, force, self.tau)
+        # rk4_compiled = jit(rk4)
+        self.state = rk4(self.dynamics_cartpole, self.state, force, self.tau)
 
         x = self.state[0]
         theta = self.state[2]
@@ -162,14 +163,14 @@ class CartPole():
         
         # for now, we have step return same thing as gymnasium does
         # next_state, reward, terminated, truncated, info
-        return np.array(self.state, dtype=np.float32), reward, terminated, truncated, {}
+        return jnp.array(self.state, dtype=np.float32), reward, terminated, truncated, {}
 
 
     def dynamics_cartpole(self, current_state, action):
         # current state is comprised of x, x_dot, theta, theta_dot
         # change in each of these is x_dot, x_acc, theta_dot, theta_acc
         x, x_dot, theta, theta_dot = current_state
-        return np.array([x_dot, self.x_acc, theta_dot, self.theta_acc], dtype=np.float32)
+        return jnp.array([x_dot, self.x_acc, theta_dot, self.theta_acc], dtype=np.float32)
     
     def calc_theta_acc(self, force):
         # Get position, velocity, angle, and angular velocity from state
@@ -233,6 +234,7 @@ class CartPole():
              
 
 if __name__ == '__main__':
+    start_time = time.time()
     cart = CartPole()
     cart.reset()
     print("testing")
@@ -250,3 +252,4 @@ if __name__ == '__main__':
     print("State after applying  -{0}N force for {1}seconds: {2}\n".format(cart.force_mag, cart.tau, cart.state))
     cart.step(0)
     print("State after applying  -{0}N force for {1}seconds: {2}\n".format(cart.force_mag, cart.tau, cart.state))
+    print("--- %s seconds ---" % (time.time() - start_time))

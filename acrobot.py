@@ -114,7 +114,7 @@ class Acrobot():
 
         # episode ending possibilities
         self.steps = 0
-        self.steps_beyond_terminated = None
+        self.steps_beyond_terminated = None     # currently does nothing
 
         # Possible actions the acrobot can take
         # 0: apply -1 torque to the actuated joint

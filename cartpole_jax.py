@@ -100,7 +100,7 @@ class CartPole():
                 self.theta_threshold_radians * 2,
                 jnp.inf,     # np.finfo(np.float32).max,
             ],
-            dtype=np.float32,
+            dtype=float,
         )
         self.lower_bound = -self.upper_bound
 
@@ -163,14 +163,14 @@ class CartPole():
         
         # for now, we have step return same thing as gymnasium does
         # next_state, reward, terminated, truncated, info
-        return jnp.array(self.state, dtype=np.float32), reward, terminated, truncated, {}
+        return jnp.array(self.state, dtype=float), reward, terminated, truncated, {}
 
 
     def dynamics_cartpole(self, current_state, action):
         # current state is comprised of x, x_dot, theta, theta_dot
         # change in each of these is x_dot, x_acc, theta_dot, theta_acc
         x, x_dot, theta, theta_dot = current_state
-        return jnp.array([x_dot, self.x_acc, theta_dot, self.theta_acc], dtype=np.float32)
+        return jnp.array([x_dot, self.x_acc, theta_dot, self.theta_acc], dtype=float)
     
     def calc_theta_acc(self, force):
         # Get position, velocity, angle, and angular velocity from state

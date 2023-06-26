@@ -2,11 +2,9 @@
 Classic cart-pole system implemented by Rich Sutton et al.
 Framework from: https://github.com/Farama-Foundation/Gymnasium/blob/main/gymnasium/envs/classic_control/acrobot.py
 """
-
-import math
 import numpy as np
 
-from numpy import cos, pi, sin
+from math import cos, pi, sin
 from utils import get_sign, wrap, bound
 from utils import runge_kutta as rk4
 

@@ -114,6 +114,7 @@ class Acrobot():
 
         # episode ending possibilities
         self.steps = 0
+        self.steps_beyond_terminated = None
 
         # Possible actions the acrobot can take
         # 0: apply -1 torque to the actuated joint
@@ -141,7 +142,10 @@ class Acrobot():
         low = -high
 
         self.state = np.random.uniform(low=low, high=high, size=(4,)).astype(np.float32)
+
+        self.steps = 0
         self.steps_beyond_terminated = None
+
 
         return self.state
     

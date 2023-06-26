@@ -116,6 +116,7 @@ class Acrobot():
 
         # episode ending possibilities
         self.steps = 0
+        self.steps_beyond_terminated = None     # currently does nothing
 
         # Possible actions the acrobot can take
         # 0: apply -1 torque to the actuated joint
@@ -144,6 +145,8 @@ class Acrobot():
 
         key = random.PRNGKey(0)
         self.state = random.uniform(key, shape=(4,), minval=low, maxval=high, dtype=float)
+
+        self.steps = 0
         self.steps_beyond_terminated = None
 
         return self.state

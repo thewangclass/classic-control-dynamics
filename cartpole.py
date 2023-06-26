@@ -4,6 +4,7 @@ Framework from: https://github.com/Farama-Foundation/Gymnasium/blob/main/gymnasi
 Dynamics from: https://coneural.org/florian/papers/05_cart_pole.pdf
 
 """
+import time
 import math
 import numpy as np
 
@@ -227,6 +228,7 @@ class CartPole():
              
 
 if __name__ == '__main__':
+    start_time = time.time()
     cart = CartPole()
     cart.reset()
     print("testing")
@@ -244,3 +246,4 @@ if __name__ == '__main__':
     print("State after applying  -{0}N force for {1}seconds: {2}\n".format(cart.force_mag, cart.tau, cart.state))
     cart.step(0)
     print("State after applying  -{0}N force for {1}seconds: {2}\n".format(cart.force_mag, cart.tau, cart.state))
+    print("--- %s seconds ---" % (time.time() - start_time))

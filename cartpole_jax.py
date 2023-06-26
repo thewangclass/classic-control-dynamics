@@ -10,7 +10,7 @@ import jax.numpy as jnp
 
 from utils import get_sign
 from utils import runge_kutta as rk4
-from jax import random
+from jax import random, jit
 
 class CartPole():
     """
@@ -114,7 +114,9 @@ class CartPole():
         """
         high = 0.01    
         low = -high    
-        self.state = random.uniform(shape=(4,), minval=low, maxval=high, dtype=float)
+
+        key = random.PRNGKey(0)
+        self.state = random.uniform(key, shape=(4,), minval=low, maxval=high, dtype=float)
 
         self.steps_beyond_terminated = None
         self.steps = 0
@@ -130,7 +132,9 @@ class CartPole():
         force = self.force_mag if action == 1 else -self.force_mag
         self.calc_x_acc(force)  # calc_x_acc updates theta_acc first to be used in x_acc calculation
         print("x_acc is: {0}, \ntheta_acc is: {1}".format(self.x_acc, self.theta_acc))
-        self.state = rk4(self.dynamics_cartpole, self.state, force, self.tau)
+
+        rk4_compiled = jit(rk4)
+        self.state = rk4_compiled(self.dynamics_cartpole, self.state, force, self.tau)
 
         x = self.state[0]
         theta = self.state[2]

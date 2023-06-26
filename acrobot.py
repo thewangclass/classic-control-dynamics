@@ -225,4 +225,4 @@ if __name__ == '__main__':
 
     t=2
     abot.step(t)
-    print("State after applying  {0}Nm torque for {1}seconds: {2}\n".format(abot.avail_torque[t], abot.tau, abot.state))
+    print("State after applying  {0}Nm torque for {1}seconds to the actuated joint: {2}\n".format(abot.avail_torque[t], abot.tau, abot.state))

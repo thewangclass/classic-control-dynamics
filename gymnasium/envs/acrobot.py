@@ -192,6 +192,8 @@ class Acrobot():
         theta2 = s[1]
         dtheta1 = s[2]
         dtheta2 = s[3]
+
+        # http://incompleteideas.net/book/11/node4.html
         d1 = (
             m1 * lc1**2
             + m2 * (l1**2 + lc2**2 + 2 * l1 * lc2 * cos(theta2))

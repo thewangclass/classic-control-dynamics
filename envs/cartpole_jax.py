@@ -9,8 +9,8 @@ import math
 import numpy as np
 import jax.numpy as jnp
 
-from utils import get_sign
-from utils import runge_kutta as rk4
+from utils.utils import get_sign
+from utils.utils import runge_kutta as rk4
 from jax import random, jit
 
 class CartPole():

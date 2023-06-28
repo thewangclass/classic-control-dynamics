@@ -6,8 +6,8 @@ import numpy as np
 import jax.numpy as jnp
 
 from math import cos, pi, sin
-from utils import wrap, bound
-from utils import runge_kutta as rk4
+from utils.utils import wrap, bound
+from utils.utils import runge_kutta as rk4
 from jax import random, jit
 
 

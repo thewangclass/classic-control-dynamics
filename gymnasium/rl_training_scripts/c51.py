@@ -16,7 +16,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-import cartpole, acrobot
+from envs import cartpole, acrobot
 
 
 def parse_args():
@@ -82,6 +82,10 @@ def parse_args():
 
     return args
 
+
+"""
+Later separate this into agent (learner) and network?
+"""
 class CategoricalDQN(nn.Module):
     def __init__(self, env, n_atoms=101, v_min=-100, v_max=100, df=0.99, buffer_size=1e6, batch_size=128, lr=2.5e-4, network_update=500,training_freq=10, start_eps=1, end_eps=0.05, start_train_at=10000):
         super(CategoricalDQN, self).__init__()
@@ -101,7 +105,7 @@ class CategoricalDQN(nn.Module):
         self.update_every = training_freq
 
         self.network = nn.Sequential(
-            nn.Linear(np.array(env.observation_space.shape).prod(), 120),
+            nn.Linear(np.array(env.observation_space.shape).prod(), 120),       # 
             nn.ReLU(),
             nn.Linear(120, 84),
             nn.ReLU(),
@@ -128,12 +132,26 @@ if __name__ == "__main__":
     print(device)
 
     # setup environment
-    env = args.env_id   # cartpole/acrobot for now
-    print(env)
-
+    env = cartpole.Cartpole()
+    # env = args.env_id   # cartpole/acrobot for now
+    print(env)          # cartpole -> somehow grab the constructor Cartpole() and call it
 
     # Setup network
-    c51_network = CategoricalDQN()
+    n_atoms = args.n_atoms
+    v_min = args.v_min
+    v_max = args.v_max
+    df = args.gamma
+    buffer_size = args.buffer_size
+    batch_size = args.batch_size
+    lr = args.learning_rate
+    network_update = args.target_network_frequency
+    training_freq = args.train_frequency
+    start_eps = args.start_e
+    end_eps = args.end_e
+    start_train_at = args.learning_starts
+
+    c51_network = CategoricalDQN(env, n_atoms=n_atoms, v_min=v_min, v_max=v_max, df=df, buffer_size=buffer_size, batch_size=batch_size, 
+                                 lr=lr, network_update=network_update, training_freq=training_freq, start_eps=start_eps, end_eps=end_eps, start_train_at=start_train_at).to(device)
 
     # Setup replay buffer
 

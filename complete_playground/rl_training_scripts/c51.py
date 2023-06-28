@@ -5,7 +5,8 @@ Resources used
 2) https://github.com/fedetask/categorical-dqn/blob/master/categorical_dqn.py
 
 """
-
+import sys
+sys.path.append("/home/thewangclass/projects/classic-control-dynamics/")
 import argparse
 import os
 import time
@@ -104,6 +105,11 @@ class CategoricalDQN(nn.Module):
         self.batch_size = batch_size
         self.update_every = training_freq
 
+        # dependent on env >> modify code later to be dynamic, hardcode for now
+        self.n = len(env.action_space)      # number of possible actions, 2 actions for 
+        print(self.n)
+        print(env.observation_space.shape)
+
         self.network = nn.Sequential(
             nn.Linear(np.array(env.observation_space.shape).prod(), 120),       # 
             nn.ReLU(),
@@ -112,7 +118,8 @@ class CategoricalDQN(nn.Module):
             nn.Linear(84, self.n * n_atoms)
         )
 
-
+    def get_action(self, x, action=None):
+        pass
 
 
     def forward(self, x):
@@ -132,9 +139,11 @@ if __name__ == "__main__":
     print(device)
 
     # setup environment
-    env = cartpole.Cartpole()
+    env = cartpole.CartPole()
     # env = args.env_id   # cartpole/acrobot for now
-    print(env)          # cartpole -> somehow grab the constructor Cartpole() and call it
+    print(env.state)          # cartpole -> somehow grab the constructor Cartpole() and call it
+    env.reset()
+    print(env.state)
 
     # Setup network
     n_atoms = args.n_atoms

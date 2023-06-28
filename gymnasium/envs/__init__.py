@@ -1,2 +1,2 @@
-from envs.acrobot import Acrobot
-from envs.cartpole import CartPole
+from gymnasium.envs.acrobot import Acrobot
+from gymnasium.envs.cartpole import CartPole

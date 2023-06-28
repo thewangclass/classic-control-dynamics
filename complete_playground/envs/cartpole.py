@@ -4,14 +4,12 @@ Framework from: https://github.com/Farama-Foundation/Gymnasium/blob/main/gymnasi
 Dynamics from: https://coneural.org/florian/papers/05_cart_pole.pdf
 
 """
-import time 
+import time
 import math
 import numpy as np
-import jax.numpy as jnp
 
-from utils.utils import get_sign
-from utils.utils import runge_kutta as rk4
-from jax import random, jit
+from complete_playground.envs.utils import get_sign
+from complete_playground.envs.utils import runge_kutta as rk4
 
 class CartPole():
     """
@@ -93,16 +91,18 @@ class CartPole():
         # Angle limit set to 2 * theta_threshold_radians so failing observation
         # is still within bounds.
         # Really these should be called upper and lower bounds.
-        self.upper_bound = jnp.array(
+        self.upper_bound = np.array(
             [
                 self.x_threshold * 2,
-                jnp.inf,    # np.finfo(np.float32).max,
+                np.inf,    # np.finfo(np.float32).max,
                 self.theta_threshold_radians * 2,
-                jnp.inf,     # np.finfo(np.float32).max,
+                np.inf,     # np.finfo(np.float32).max,
             ],
-            dtype=float,
+            dtype=np.float32,
         )
         self.lower_bound = -self.upper_bound
+        self.observation_space = self.upper_bound           # to use in network for first layer input
+        # print(self.observation_space.shape)
 
         # CartPole represented by (CartPosition, CartVelocity, PoleAngle, PoleAngVelocity)
         # Starting state is initialized randomly in reset()
@@ -115,9 +115,7 @@ class CartPole():
         """
         high = 0.01    
         low = -high    
-
-        key = random.PRNGKey(0)
-        self.state = random.uniform(key, shape=(4,), minval=low, maxval=high, dtype=float)
+        self.state = np.random.uniform(low=low, high=high, size=(4,)).astype(np.float32)
 
         self.steps_beyond_terminated = None
         self.steps = 0
@@ -133,8 +131,6 @@ class CartPole():
         force = self.force_mag if action == 1 else -self.force_mag
         self.calc_x_acc(force)  # calc_x_acc updates theta_acc first to be used in x_acc calculation
         print("x_acc is: {0}, \ntheta_acc is: {1}".format(self.x_acc, self.theta_acc))
-
-        # rk4_compiled = jit(rk4)
         self.state = rk4(self.dynamics_cartpole, self.state, force, self.tau)
 
         x = self.state[0]
@@ -163,14 +159,14 @@ class CartPole():
         
         # for now, we have step return same thing as gymnasium does
         # next_state, reward, terminated, truncated, info
-        return jnp.array(self.state, dtype=float), reward, terminated, truncated, {}
+        return np.array(self.state, dtype=np.float32), reward, terminated, truncated, {}
 
 
     def dynamics_cartpole(self, current_state, action):
         # current state is comprised of x, x_dot, theta, theta_dot
         # change in each of these is x_dot, x_acc, theta_dot, theta_acc
         x, x_dot, theta, theta_dot = current_state
-        return jnp.array([x_dot, self.x_acc, theta_dot, self.theta_acc], dtype=float)
+        return np.array([x_dot, self.x_acc, theta_dot, self.theta_acc], dtype=np.float32)
     
     def calc_theta_acc(self, force):
         # Get position, velocity, angle, and angular velocity from state

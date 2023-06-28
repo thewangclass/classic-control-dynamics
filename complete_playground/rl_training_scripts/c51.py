@@ -16,7 +16,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from envs import cartpole, acrobot
+from complete_playground.envs import cartpole, acrobot
 
 
 def parse_args():

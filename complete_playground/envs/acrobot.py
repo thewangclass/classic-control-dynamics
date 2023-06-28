@@ -5,8 +5,8 @@ Framework from: https://github.com/Farama-Foundation/Gymnasium/blob/main/gymnasi
 import numpy as np
 
 from math import cos, pi, sin
-from utils import get_sign, wrap, bound
-from utils import runge_kutta as rk4
+from complete_playground.envs.utils import wrap, bound
+from complete_playground.envs.utils import runge_kutta as rk4
 
 
 

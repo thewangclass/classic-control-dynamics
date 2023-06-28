@@ -1,8 +1,8 @@
-
 # Get the sign of a value
 def get_sign(x):
     if (x == 0): return 0
     else: return x/abs(x)
+
 
 # # Implement rk4 integration using https://en.wikipedia.org/wiki/Runge%E2%80%93Kutta_methods
 # # scipy.integrate.RK45
@@ -21,7 +21,6 @@ def runge_kutta(dynamics_f, state, action, dt):
     k4 = dynamics_f(state + dt * k3, action)
     next_state = state + (k1 + 2 * k2 + 2 * k3 + k4) * dt / 6
     return next_state
-
 
 
 def wrap(x, m, M):

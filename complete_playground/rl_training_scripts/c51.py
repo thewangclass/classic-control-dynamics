@@ -31,20 +31,12 @@ def parse_args():
         help="if toggled, `torch.backends.cudnn.deterministic=False`")
     parser.add_argument("--cuda", type=bool, default=True, nargs="?", const=True,
         help="if toggled, cuda will be enabled by default")
-    # parser.add_argument("--track", type=lambda x: bool(strtobool(x)), default=False, nargs="?", const=True,
-    #     help="if toggled, this experiment will be tracked with Weights and Biases")
-    # parser.add_argument("--wandb-project-name", type=str, default="cleanRL",
-    #     help="the wandb's project name")
-    # parser.add_argument("--wandb-entity", type=str, default=None,
-    #     help="the entity (team) of wandb's project")
-    # parser.add_argument("--capture-video", type=lambda x: bool(strtobool(x)), default=False, nargs="?", const=True,
-    #     help="whether to capture videos of the agent performances (check out `videos` folder)")
-    # parser.add_argument("--save-model", type=lambda x: bool(strtobool(x)), default=False, nargs="?", const=True,
-    #     help="whether to save model into the `runs/{run_name}` folder")
-    # parser.add_argument("--upload-model", type=lambda x: bool(strtobool(x)), default=False, nargs="?", const=True,
-    #     help="whether to upload the saved model to huggingface")
-    # parser.add_argument("--hf-entity", type=str, default="",
-    #     help="the user or org name of the model repository from the Hugging Face Hub")
+    parser.add_argument("--track", type=bool, default=False, nargs="?", const=True,
+        help="if toggled, this experiment will be tracked with Weights and Biases")
+
+    parser.add_argument("--save-model", type=bool, default=False, nargs="?", const=True,
+        help="whether to save model into the `runs/{run_name}` folder")
+
 
     # Algorithm specific arguments
     parser.add_argument("--env-id", type=str, default="cartpole",
@@ -152,7 +144,7 @@ if __name__ == "__main__":
     env.reset()
     print(env.state)
 
-    # Setup network
+    # Initialize Network
     n_atoms = args.n_atoms
     v_min = args.v_min
     v_max = args.v_max
@@ -166,6 +158,7 @@ if __name__ == "__main__":
     end_eps = args.end_e
     start_train_at = args.learning_starts
 
+    # Create Model and Choose Optimizer
     q_network = QNetwork(env, n_atoms=args.n_atoms, v_min=args.v_min, v_max=args.v_max).to(device)
     optimizer = optim.Adam(q_network.parameters(), lr=args.learning_rate, eps=0.01 / args.batch_size)
     target_network = QNetwork(env, n_atoms=args.n_atoms, v_min=args.v_min, v_max=args.v_max).to(device)

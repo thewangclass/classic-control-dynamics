@@ -78,11 +78,14 @@ class CategoricalDQN:
             with torch.no_grad():
                 z = self.z_net(state)
             if random.random() < self.epsilon:  # Random action
-                action = torch.LongTensor([[env.action_space.sample()]])
+                # print(random.choice(tuple(env.action_space)))
+                action = torch.LongTensor([[random.choice(tuple(env.action_space))]])      # changed
             else:
                 action = select_argmax_action(z, self.atoms)
-            next_state, reward, done, info = env.step(squeeze_np(action))
-            next_state = np_to_unsq_tensor(next_state) if not done else None
+            # print(action)
+            next_state, reward, terminated, truncated, info = env.step(squeeze_np(action))      # changed squeeze_np(action)
+            done = terminated or truncated
+            next_state = np_to_unsq_tensor(next_state) if not done else None        # changed
             self.replay_buffer.remember(
                 Transition(state, action, torch.tensor([[reward]]), next_state))
             state = next_state

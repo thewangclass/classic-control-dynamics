@@ -125,12 +125,13 @@ class CartPole():
 
     def step(self, action):
         # Make sure valid action and state are present
-        assert action in self.action_space, f"invalid action chosen: {action}"
+        # print(action)
+        # assert action in self.action_space, f"invalid action chosen: {action}"            # TODO: cannot check if ndarray is in here
         assert self.state is not None, "Call reset before step"
 
         force = self.force_mag if action == 1 else -self.force_mag
         self.calc_x_acc(force)  # calc_x_acc updates theta_acc first to be used in x_acc calculation
-        print("x_acc is: {0}, \ntheta_acc is: {1}".format(self.x_acc, self.theta_acc))
+        # print("x_acc is: {0}, \ntheta_acc is: {1}".format(self.x_acc, self.theta_acc))
         self.state = rk4(self.dynamics_cartpole, self.state, force, self.tau)
 
         x = self.state[0]

@@ -87,28 +87,14 @@ def parse_args():
 """
 Later separate this into agent (learner) and network?
 """
-class CategoricalDQN(nn.Module):
+class QNetwork(nn.Module):
     def __init__(self, env, n_atoms=101, v_min=-100, v_max=100, df=0.99, buffer_size=1e6, batch_size=128, lr=2.5e-4, network_update=500,training_freq=10, start_eps=1, end_eps=0.05, start_train_at=10000):
-        super(CategoricalDQN, self).__init__()
+        super(QNetwork, self).__init__()
         self.env = env
         self.n_atoms = n_atoms
-        self.v_min = v_min
-        self.v_max = v_max
-        self.dz = (v_max-v_min) / (n_atoms - 1)     # width of each "category"
-        
-        self.df = df                                # discount factor for future rewards
-        self.epsilon = start_eps                    # episilon value dictates greedy/explore
-        self.end_epsilon = end_eps
-
-        self.start_train_at = start_train_at
-        self.buffer_size = buffer_size
-        self.batch_size = batch_size
-        self.update_every = training_freq
-
+        self.register_buffer("atoms", torch.linspace(v_min, v_max, steps=n_atoms))
         # dependent on env >> modify code later to be dynamic, hardcode for now
         self.n = len(env.action_space)      # number of possible actions, 2 actions for 
-        print(self.n)
-        print(env.observation_space.shape)
 
         self.network = nn.Sequential(
             nn.Linear(np.array(env.observation_space.shape).prod(), 120),       # 
@@ -118,12 +104,33 @@ class CategoricalDQN(nn.Module):
             nn.Linear(84, self.n * n_atoms)
         )
 
+
+        self.v_min = v_min
+        self.v_max = v_max
+        self.dz = (v_max-v_min) / (n_atoms - 1)     # width of each "category"
+        self.df = df                                # discount factor for future rewards
+        self.epsilon_start = start_eps                    # episilon value dictates greedy/explore
+        self.epsilon_end = end_eps
+
+        self.start_train_at = start_train_at
+        self.buffer_size = buffer_size
+        self.batch_size = batch_size
+        self.update_every = training_freq           # https://livebook.manning.com/concept/reinforcement-learning/target-network
+
     def get_action(self, x, action=None):
-        pass
+        logits = self.network(x)
+        # probability mass function for each action
+        pmfs = torch.softmax(logits.view(len(x), self.n, self.n_atoms), dim=2)
+        q_values = (pmfs * self.atoms).sum(2)
+        if action is None:
+            action = torch.argmax(q_values, 1)
+        return action, pmfs[torch.arange(len(x)), action]
 
 
-    def forward(self, x):
-        pass
+def linear_schedule(start_e: float, end_e: float, duration: int, t: int):
+    slope = (end_e - start_e) / duration
+    return max(slope * t + start_e, end_e)
+
 
 if __name__ == "__main__":
     args = parse_args()
@@ -159,10 +166,19 @@ if __name__ == "__main__":
     end_eps = args.end_e
     start_train_at = args.learning_starts
 
+    q_network = QNetwork(env, n_atoms=args.n_atoms, v_min=args.v_min, v_max=args.v_max).to(device)
+    optimizer = optim.Adam(q_network.parameters(), lr=args.learning_rate, eps=0.01 / args.batch_size)
+    target_network = QNetwork(env, n_atoms=args.n_atoms, v_min=args.v_min, v_max=args.v_max).to(device)
+    target_network.load_state_dict(q_network.state_dict())
+
+    """
     c51_network = CategoricalDQN(env, n_atoms=n_atoms, v_min=v_min, v_max=v_max, df=df, buffer_size=buffer_size, batch_size=batch_size, 
                                  lr=lr, network_update=network_update, training_freq=training_freq, start_eps=start_eps, end_eps=end_eps, start_train_at=start_train_at).to(device)
+    """
+    
 
     # Setup replay buffer
+
 
     # Begin trial!
 

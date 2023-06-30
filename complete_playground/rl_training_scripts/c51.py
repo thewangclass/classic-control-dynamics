@@ -87,7 +87,7 @@ class QNetwork(nn.Module):
         self.n_atoms = n_atoms
         self.register_buffer("atoms", torch.linspace(v_min, v_max, steps=n_atoms))
         # dependent on env >> modify code later to be dynamic, hardcode for now
-        self.n = len(env.action_space)      # number of possible actions, 2 actions for 
+        self.n = env.action_space.n     # number of possible actions, 2 actions for 
 
         self.network = nn.Sequential(
             nn.Linear(np.array(env.observation_space.shape).prod(), 120),       # 
@@ -182,14 +182,14 @@ if __name__ == "__main__":
     start_time = time.time()
 
     # Begin trial!
-    obs, _ = env.reset()
+    obs = env.reset()
     for global_step in range(args.total_timesteps):
 
         # Choose next action according to Explore vs Exploit
         # epsilon will decrease over time
         epsilon = linear_schedule(args.start_e, args.end_e, args.exploration_fraction * args.total_timesteps, global_step)
         if random.random() < epsilon:
-            actions = np.array([random.choice(tuple(env.action_space))])
+            actions = np.array([env.action_space.sample()])
         else:
             actions, pmf = q_network.get_action(torch.Tensor(obs).to(device))
             actions = actions.cpu().numpy()

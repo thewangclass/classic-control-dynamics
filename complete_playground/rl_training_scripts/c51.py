@@ -17,6 +17,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
+from stable_baselines3.common.buffers import ReplayBuffer
 from complete_playground.envs import cartpole, acrobot
 
 
@@ -171,10 +172,42 @@ if __name__ == "__main__":
     
 
     # Setup replay buffer
-
+    rb = ReplayBuffer(
+            args.buffer_size,
+            env.single_observation_space,
+            env.single_action_space,
+            device,
+            handle_timeout_termination=False,
+    )
+    start_time = time.time()
 
     # Begin trial!
+    obs, _ = env.reset()
+    for global_step in range(args.total_timesteps):
 
+        # Choose next action according to Explore vs Exploit
+        # epsilon will decrease over time
+        epsilon = linear_schedule(args.start_e, args.end_e, args.exploration_fraction * args.total_timesteps, global_step)
+        if random.random() < epsilon:
+            actions = np.array([random.choice(tuple(env.action_space))])
+        else:
+            actions, pmf = q_network.get_action(torch.Tensor(obs).to(device))
+            actions = actions.cpu().numpy()
 
+        # Execute a step in the game
+        next_obs, rewards, terminated, truncated, infos = env.step(actions)
+
+        # TODO: Record rewards for plotting purposes?
+
+        
+        # TODO: Handle final observation?
+        # Save data to replay buffer
+        real_next_obs = next_obs.copy()
+        rb.add(obs, real_next_obs, actions, rewards, terminated, infos)
+
+        # Set state to next state
+        obs = next_obs
+
+        # TODO: Start training when the timestep is > time to start training
 
     pass

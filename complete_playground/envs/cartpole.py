@@ -10,6 +10,7 @@ import numpy as np
 
 from complete_playground.envs.utils import get_sign
 from complete_playground.envs.utils import runge_kutta as rk4
+from complete_playground import spaces
 
 class CartPole():
     """
@@ -86,7 +87,9 @@ class CartPole():
 
         # Possible actions the cartpole can take
         # 0 push cart to left, 1 push cart to right
-        self.action_space = {0, 1}
+        # self.action_space = {0, 1}
+        self.action_space = spaces.Discrete(2)
+        
 
         # Angle limit set to 2 * theta_threshold_radians so failing observation
         # is still within bounds.
@@ -101,8 +104,9 @@ class CartPole():
             dtype=np.float32,
         )
         self.lower_bound = -self.upper_bound
-        self.observation_space = self.upper_bound           # to use in network for first layer input
+        # self.observation_space = self.upper_bound           # to use in network for first layer input
         # print(self.observation_space.shape)
+        self.observation_space = spaces.Box(self.lower_bound, self.upper_bound, dtype=np.float32)
 
         # CartPole represented by (CartPosition, CartVelocity, PoleAngle, PoleAngVelocity)
         # Starting state is initialized randomly in reset()

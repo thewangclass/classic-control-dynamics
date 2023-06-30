@@ -42,7 +42,7 @@ def parse_args():
     # Algorithm specific arguments
     parser.add_argument("--env-id", type=str, default="cartpole",
         help="the id of the environment")
-    parser.add_argument("--total-timesteps", type=int, default=500000,
+    parser.add_argument("--total-timesteps", type=int, default=1000,
         help="total timesteps of the experiments")
     parser.add_argument("--learning-rate", type=float, default=2.5e-4,
         help="the learning rate of the optimizer")
@@ -174,8 +174,8 @@ if __name__ == "__main__":
     # Setup replay buffer
     rb = ReplayBuffer(
             args.buffer_size,
-            env.single_observation_space,
-            env.single_action_space,
+            env.observation_space,
+            env.action_space,
             device,
             handle_timeout_termination=False,
     )

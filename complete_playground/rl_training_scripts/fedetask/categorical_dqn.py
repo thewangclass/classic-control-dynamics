@@ -12,7 +12,7 @@ sys.path.append("/home/thewangclass/projects/classic-control-dynamics/")
 
 from complete_playground.envs import cartpole
 import complete_playground.rl_training_scripts.fedetask.memory as memory
-from memory import Transition
+from complete_playground.rl_training_scripts.fedetask.memory import Transition
 import complete_playground.rl_training_scripts.fedetask.networks as networks
 from complete_playground.rl_training_scripts.fedetask.utils import np_to_unsq_tensor, squeeze_np
 from complete_playground.rl_training_scripts.fedetask.experiment_utils import Plot

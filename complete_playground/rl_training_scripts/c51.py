@@ -61,7 +61,7 @@ def parse_args():
         help="the discount factor gamma")
     parser.add_argument("--target-network-frequency", type=int, default=500,
         help="the timesteps it takes to update the target network")
-    parser.add_argument("--batch-size", type=int, default=1,
+    parser.add_argument("--batch-size", type=int, default=2,
         help="the batch size of sample from the reply memory")
     parser.add_argument("--start-e", type=float, default=1,
         help="the starting epsilon for exploration")
@@ -69,7 +69,7 @@ def parse_args():
         help="the ending epsilon for exploration")
     parser.add_argument("--exploration-fraction", type=float, default=0.5,
         help="the fraction of `total-timesteps` it takes from start-e to go end-e")
-    parser.add_argument("--learning-starts", type=int, default=10000,
+    parser.add_argument("--learning-starts", type=int, default=100,
         help="timestep to start learning")
     parser.add_argument("--train-frequency", type=int, default=10,
         help="the frequency of training")
@@ -112,7 +112,7 @@ class QNetwork(nn.Module):
         self.update_every = training_freq           # https://livebook.manning.com/concept/reinforcement-learning/target-network
 
     def get_action(self, x, action=None):
-        x = x.unsqueeze(0)              # cleanrl passes in tensor of [1, obs_shape], so we unsqueeze here to get the same
+        # x = x.unsqueeze(0)              # cleanrl passes in tensor of [1, obs_shape], moved unsqueeze to exploit choosing
         logits = self.network(x)
         # probability mass function for each action
         pmfs = torch.softmax(logits.view(len(x), self.n, self.n_atoms), dim=2)
@@ -194,17 +194,18 @@ if __name__ == "__main__":
         if random.random() < epsilon:   # choose random action
             actions = np.array([random.choice(tuple(env.action_space))])
         else:                           # choose action with highest future rewards
-            actions, pmf = q_network.get_action(torch.Tensor(obs).to(device))
+            actions, pmf = q_network.get_action(torch.Tensor().unsqueeze().to(device))
             actions = actions.cpu().numpy()
 
         # Execute a step in the game
-        print(actions)
+        # print(actions)
         next_obs, rewards, terminated, truncated, infos = env.step(actions)
         
         # TODO: Handle final observation?
         # Save data to replay buffer
         real_next_obs = next_obs.copy()
-        rb.append([obs, real_next_obs, actions, rewards, terminated, truncated, infos])
+        done = terminated or truncated
+        rb.append([obs, real_next_obs, actions, rewards, done, infos])
 
         # Set state to next state
         obs = next_obs
@@ -214,10 +215,10 @@ if __name__ == "__main__":
             if global_step % args.train_frequency == 0:
                 data = sample_transitions(rb, args.batch_size)
                 with torch.no_grad():
-                    _, next_pmfs = target_network.get_action(data.next_observations)
-                    next_atoms = data.rewards + args.gamma * target_network.atoms * (1 - data.dones)
+                    _, next_pmfs = target_network.get_action(torch.from_numpy(data[:,1]))
+                    next_atoms = data[:,3] + args.gamma * target_network.atoms * (1 - data[:,4])
                     # projection to an atom
-                    delta_z = target_network.atoms[1] - target_network.atoms[0]
+                    delta_z = target_network.atoms[:,1] - target_network.atoms[0]
                     tz = next_atoms.clamp(args.v_min, args.v_max)
 
                     b = (tz - args.v_min) / delta_z
@@ -232,7 +233,7 @@ if __name__ == "__main__":
                         target_pmfs[i].index_add_(0, l[i].long(), d_m_l[i])
                         target_pmfs[i].index_add_(0, u[i].long(), d_m_u[i])
 
-                _, old_pmfs = q_network.get_action(data.observations, data.actions.flatten())
+                _, old_pmfs = q_network.get_action(data[:,0], data[:,2].flatten())
                 loss = (-(target_pmfs * old_pmfs.clamp(min=1e-5, max=1 - 1e-5).log()).sum(-1)).mean()
 
                 # if global_step % 100 == 0:
@@ -247,13 +248,21 @@ if __name__ == "__main__":
                 loss.backward()
                 optimizer.step()
 
-            # update the target network
+            # update the target network according to specified frequency
             if global_step % args.target_network_frequency == 0:
                 target_network.load_state_dict(q_network.state_dict())
 
-        # TODO: Check if terminated or truncated, if so then reset and start over
+        # TODO: Check if terminated or truncated, if so then record stats, reset and start over
         if terminated:
+            print("Environment resetting!")
             env.reset()
 
 
-    pass
+    if args.save_model:
+        model_path = f"runs/{run_name}/{args.exp_name}.cleanrl_model"
+        model_data = {
+            "model_weights": q_network.state_dict(),
+            "args": vars(args),
+        }
+        torch.save(model_data, model_path)
+        print(f"model saved to {model_path}")

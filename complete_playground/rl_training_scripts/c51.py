@@ -16,8 +16,9 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from collections import deque
 
-from stable_baselines3.common.buffers import ReplayBuffer
+# from complete_playground.utils.buffer import ReplayBuffer
 from complete_playground.envs import cartpole, acrobot
 
 
@@ -60,7 +61,7 @@ def parse_args():
         help="the discount factor gamma")
     parser.add_argument("--target-network-frequency", type=int, default=500,
         help="the timesteps it takes to update the target network")
-    parser.add_argument("--batch-size", type=int, default=128,
+    parser.add_argument("--batch-size", type=int, default=1,
         help="the batch size of sample from the reply memory")
     parser.add_argument("--start-e", type=float, default=1,
         help="the starting epsilon for exploration")
@@ -81,7 +82,7 @@ def parse_args():
 Later separate this into agent (learner) and network?
 """
 class QNetwork(nn.Module):
-    def __init__(self, env, n_atoms=101, v_min=-100, v_max=100, df=0.99, buffer_size=1e6, batch_size=128, lr=2.5e-4, network_update=500,training_freq=10, start_eps=1, end_eps=0.05, start_train_at=10000):
+    def __init__(self, env, n_atoms=101, v_min=-100, v_max=100, df=0.99, buffer_size=1e6, batch_size=1, lr=2.5e-4, network_update=500,training_freq=10, start_eps=1, end_eps=0.05, start_train_at=10000):
         super(QNetwork, self).__init__()
         self.env = env
         self.n_atoms = n_atoms
@@ -94,7 +95,7 @@ class QNetwork(nn.Module):
             nn.ReLU(),
             nn.Linear(120, 84),
             nn.ReLU(),
-            nn.Linear(84, self.n * n_atoms)
+            nn.Linear(84, self.n * n_atoms)             # 2 action_space x 101 number_atoms
         )
 
 
@@ -111,6 +112,7 @@ class QNetwork(nn.Module):
         self.update_every = training_freq           # https://livebook.manning.com/concept/reinforcement-learning/target-network
 
     def get_action(self, x, action=None):
+        x = x.unsqueeze(0)              # cleanrl passes in tensor of [1, obs_shape], so we unsqueeze here to get the same
         logits = self.network(x)
         # probability mass function for each action
         pmfs = torch.softmax(logits.view(len(x), self.n, self.n_atoms), dim=2)
@@ -123,6 +125,13 @@ class QNetwork(nn.Module):
 def linear_schedule(start_e: float, end_e: float, duration: int, t: int):
     slope = (end_e - start_e) / duration
     return max(slope * t + start_e, end_e)
+
+
+
+def sample_transitions(replay_buffer, batch_size):
+    batch = np.random.permutation(len(replay_buffer))[:batch_size]
+    trans = np.array(replay_buffer)[batch]
+    return trans
 
 
 if __name__ == "__main__":
@@ -172,13 +181,7 @@ if __name__ == "__main__":
     
 
     # Setup replay buffer
-    rb = ReplayBuffer(
-            args.buffer_size,
-            env.single_observation_space,
-            env.single_action_space,
-            device,
-            handle_timeout_termination=False,
-    )
+    rb = deque(maxlen=buffer_size)
     start_time = time.time()
 
     # Begin trial!
@@ -188,26 +191,69 @@ if __name__ == "__main__":
         # Choose next action according to Explore vs Exploit
         # epsilon will decrease over time
         epsilon = linear_schedule(args.start_e, args.end_e, args.exploration_fraction * args.total_timesteps, global_step)
-        if random.random() < epsilon:
+        if random.random() < epsilon:   # choose random action
             actions = np.array([random.choice(tuple(env.action_space))])
-        else:
+        else:                           # choose action with highest future rewards
             actions, pmf = q_network.get_action(torch.Tensor(obs).to(device))
             actions = actions.cpu().numpy()
 
         # Execute a step in the game
+        print(actions)
         next_obs, rewards, terminated, truncated, infos = env.step(actions)
-
-        # TODO: Record rewards for plotting purposes?
-
         
         # TODO: Handle final observation?
         # Save data to replay buffer
         real_next_obs = next_obs.copy()
-        rb.add(obs, real_next_obs, actions, rewards, terminated, infos)
+        rb.append([obs, real_next_obs, actions, rewards, terminated, truncated, infos])
 
         # Set state to next state
         obs = next_obs
 
         # TODO: Start training when the timestep is > time to start training
+        if global_step > args.learning_starts:
+            if global_step % args.train_frequency == 0:
+                data = sample_transitions(rb, args.batch_size)
+                with torch.no_grad():
+                    _, next_pmfs = target_network.get_action(data.next_observations)
+                    next_atoms = data.rewards + args.gamma * target_network.atoms * (1 - data.dones)
+                    # projection to an atom
+                    delta_z = target_network.atoms[1] - target_network.atoms[0]
+                    tz = next_atoms.clamp(args.v_min, args.v_max)
+
+                    b = (tz - args.v_min) / delta_z
+                    l = b.floor().clamp(0, args.n_atoms - 1)
+                    u = b.ceil().clamp(0, args.n_atoms - 1)
+                    # (l == u).float() handles the case where bj is exactly an integer
+                    # example bj = 1, then the upper ceiling should be uj= 2, and lj= 1
+                    d_m_l = (u + (l == u).float() - b) * next_pmfs
+                    d_m_u = (b - l) * next_pmfs
+                    target_pmfs = torch.zeros_like(next_pmfs)
+                    for i in range(target_pmfs.size(0)):
+                        target_pmfs[i].index_add_(0, l[i].long(), d_m_l[i])
+                        target_pmfs[i].index_add_(0, u[i].long(), d_m_u[i])
+
+                _, old_pmfs = q_network.get_action(data.observations, data.actions.flatten())
+                loss = (-(target_pmfs * old_pmfs.clamp(min=1e-5, max=1 - 1e-5).log()).sum(-1)).mean()
+
+                # if global_step % 100 == 0:
+                #     writer.add_scalar("losses/loss", loss.item(), global_step)
+                #     old_val = (old_pmfs * q_network.atoms).sum(1)
+                #     writer.add_scalar("losses/q_values", old_val.mean().item(), global_step)
+                #     print("SPS:", int(global_step / (time.time() - start_time)))
+                #     writer.add_scalar("charts/SPS", int(global_step / (time.time() - start_time)), global_step)
+
+                # optimize the model
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+
+            # update the target network
+            if global_step % args.target_network_frequency == 0:
+                target_network.load_state_dict(q_network.state_dict())
+
+        # TODO: Check if terminated or truncated, if so then reset and start over
+        if terminated:
+            env.reset()
+
 
     pass

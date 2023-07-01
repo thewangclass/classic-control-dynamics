@@ -115,12 +115,12 @@ class CartPole():
         """
         high = 0.01    
         low = -high    
-        self.state = np.random.uniform(low=low, high=high, size=(4,)).astype(np.float32)
+        self.state = np.random.uniform(low=low, high=high, size=(4,))
 
         self.steps_beyond_terminated = None
         self.steps = 0
 
-        return self.state
+        return np.array(self.state, dtype=np.float32), {}
 
 
     def step(self, action):
@@ -156,6 +156,10 @@ class CartPole():
         else:
             # arrives here only if terminated = True and steps_beyond_terminated is not None
             self.steps_beyond_terminated += 1
+            print("You are calling 'step()' even though this "
+                    "environment has already returned terminated = True. You "
+                    "should always call 'reset()' once you receive 'terminated = "
+                    "True' -- any further steps are undefined behavior.")
             reward = 0.0
         
         # for now, we have step return same thing as gymnasium does

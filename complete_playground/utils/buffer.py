@@ -61,7 +61,7 @@ class ReplayBuffer():
         self.pos = 0
         self.full = False
 
-    def sample_transitions(self, batch_size: int):
+    def sample(self, batch_size: int):
         """
         :param batch_size: Number of element to sample
         :return:

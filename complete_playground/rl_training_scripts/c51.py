@@ -199,7 +199,7 @@ if __name__ == "__main__":
         if random.random() < epsilon:   # choose random action
             actions = np.array([random.choice(tuple(env.action_space))])
         else:                           # choose action with highest future rewards
-            actions, pmf = q_network.get_action(torch.Tensor().unsqueeze().to(device))
+            actions, pmf = q_network.get_action(torch.Tensor().unsqueeze().to(device))      # unsqueeze because only one env?
             actions = actions.cpu().numpy()
 
         # Execute a step in the game
@@ -210,7 +210,7 @@ if __name__ == "__main__":
         # Save data to replay buffer
         real_next_obs = next_obs.copy()
         done = terminated or truncated
-        rb.append([obs, real_next_obs, actions, rewards, done, infos])
+        rb.add(obs, real_next_obs, actions, rewards, terminated, truncated, done, infos)
 
         # Set state to next state
         obs = next_obs
@@ -218,10 +218,10 @@ if __name__ == "__main__":
         # TODO: Start training when the timestep is > time to start training
         if global_step > args.learning_starts:
             if global_step % args.train_frequency == 0:
-                data = sample_transitions(rb, args.batch_size)
+                data = rb.sample(batch_size)
                 with torch.no_grad():
-                    _, next_pmfs = target_network.get_action(torch.from_numpy(data[:,1]))
-                    next_atoms = data[:,3] + args.gamma * target_network.atoms * (1 - data[:,4])
+                    _, next_pmfs = target_network.get_action(data.next_observations)
+                    next_atoms = data.rewards + args.gamma * target_network.atoms * (1 - data.dones)
                     # projection to an atom
                     delta_z = target_network.atoms[:,1] - target_network.atoms[0]
                     tz = next_atoms.clamp(args.v_min, args.v_max)

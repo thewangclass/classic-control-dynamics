@@ -39,6 +39,7 @@ class ReplayBuffer():
             reward, 
             terminated, 
             truncated, 
+            done,
             info):
         
         # sb3, copy to avoid modification by reference
@@ -48,6 +49,7 @@ class ReplayBuffer():
         self.rewards[self.pos] = np.array(reward).copy()
         self.terminations[self.pos] = np.array(terminated).copy()
         self.truncations[self.pos] = np.array(truncated).copy()
+        self.dones[self.pos] = np.array(done).copy()
 
         self.pos += 1
         if self.pos == self.buffer_size:
@@ -78,9 +80,8 @@ class ReplayBuffer():
             self.states[batch_inds, :],
             self.actions[batch_inds, :],
             self.next_states[batch_inds, :],
-            self.rewards[batch_inds, :],
-            self.terminations[batch_inds, :],
-            self.truncations[batch_inds, :],
+            self.dones[batch_inds, :],
+            self.rewards[batch_inds, :]
         }
 
         return ReplayBufferSamples(*tuple(map(self.to_torch, data)))

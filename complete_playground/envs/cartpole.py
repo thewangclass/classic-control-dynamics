@@ -87,6 +87,7 @@ class CartPole():
         # Possible actions the cartpole can take
         # 0 push cart to left, 1 push cart to right
         self.action_space = {0, 1}
+        self.action_type = "Discrete"
 
         # Angle limit set to 2 * theta_threshold_radians so failing observation
         # is still within bounds.

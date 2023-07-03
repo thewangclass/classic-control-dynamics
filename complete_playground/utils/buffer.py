@@ -14,13 +14,17 @@ class ReplayBuffer():
             self, 
             buffer_size: int,
             observation_space,
-            action_space,
+            action_type,
             device: Union[th.device, str] = "auto"
         ):
         self.buffer_size = buffer_size
         self.states = np.zeros(shape=(self.buffer_size, *observation_space.shape), dtype=observation_space.dtype)
         self.next_states = np.zeros((self.buffer_size, *observation_space.shape), dtype=observation_space.dtype)
-        self.actions = np.zeros((self.buffer_size, len(action_space)), dtype=np.int32)
+
+        if(action_type == "Discrete"):
+            action_dim = 1
+
+        self.actions = np.zeros((self.buffer_size, action_dim), dtype=np.int64)
         self.rewards = np.zeros(self.buffer_size, dtype=np.float32)
         self.dones = np.zeros(self.buffer_size, dtype=np.float32)
         self.terminations = np.zeros(self.buffer_size, dtype=np.float32)

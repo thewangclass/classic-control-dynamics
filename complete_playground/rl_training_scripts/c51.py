@@ -119,7 +119,7 @@ class QNetwork(nn.Module):
         q_values = (pmfs * self.atoms).sum(2)
         if action is None:
             action = torch.argmax(q_values, 1)
-        return action, pmfs[torch.arange(len(x)), action]
+        return action, pmfs[torch.arange(len(x)).long(), action]        # tensor used as indices must be long/byte/bool tensor
 
 
 def linear_schedule(start_e: float, end_e: float, duration: int, t: int):
@@ -150,9 +150,6 @@ if __name__ == "__main__":
     # setup environment
     env = cartpole.CartPole()
     # env = args.env_id   # cartpole/acrobot for now
-    print(env.state)          # cartpole -> somehow grab the constructor Cartpole() and call it
-    env.reset()
-    print(env.state)
 
     # Initialize Network
     n_atoms = args.n_atoms
@@ -184,7 +181,7 @@ if __name__ == "__main__":
     rb = ReplayBuffer(
         buffer_size,
         env.observation_space,
-        env.action_space,
+        env.action_type,
         device
         )
     start_time = time.time()

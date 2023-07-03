@@ -38,7 +38,7 @@ def parse_args():
     # --wandb-project-name
     # --wandb-entity
     # --capture-video
-    parser.add_argument("--save-model", type=bool, default=False, nargs="?", const=True,
+    parser.add_argument("--save-model", type=bool, default=True, nargs="?", const=True,
         help="whether to save model into the `runs/{run_name}` folder")
     # --upload-model
     # --hf-entity
@@ -46,7 +46,7 @@ def parse_args():
 
     parser.add_argument("--env-id", type=str, default="cartpole",
         help="the id of the environment")
-    parser.add_argument("--total-timesteps", type=int, default=500000,
+    parser.add_argument("--total-timesteps", type=int, default=10000,
         help="total timesteps of the experiments")
     parser.add_argument("--learning-rate", type=float, default=2.5e-4,
         help="the learning rate of the optimizer")
@@ -256,13 +256,16 @@ if __name__ == "__main__":
             if global_step % args.target_network_frequency == 0:
                 target_network.load_state_dict(q_network.state_dict())
 
+            if global_step % 10000 == 0:
+                print(global_step)
+
         # TODO: Check if terminated or truncated, if so then record stats, reset and start over
         if done:
             env.reset()
 
 
     if args.save_model:
-        model_path = f"runs/{run_name}/{args.exp_name}.cleanrl_model"
+        model_path = f"{os.getcwd()}/runs/{run_name}_{args.exp_name}.cleanrl_model"
         model_data = {
             "model_weights": q_network.state_dict(),
             "args": vars(args),

@@ -73,17 +73,16 @@ class ReplayBuffer():
         return self._get_samples(batch_inds)
     
     def _get_samples(self, batch_inds: np.ndarray):
-        env_indices = np.random.randint(0, size=(len(batch_inds),))
+        # env_indices = np.random.randint(0, high=1, size=(len(batch_inds),))     # high is number of environments, only using 1 for my implementation
 
         # why normalize observations and rewards? 
-        data = {
+        data = (
             self.states[batch_inds, :],
             self.actions[batch_inds, :],
             self.next_states[batch_inds, :],
-            self.dones[batch_inds, :],
-            self.rewards[batch_inds, :]
-        }
-
+            self.dones[batch_inds],
+            self.rewards[batch_inds]
+        )
         return ReplayBufferSamples(*tuple(map(self.to_torch, data)))
     
     def to_torch(self, array: np.ndarray, copy: bool = True) -> th.Tensor:

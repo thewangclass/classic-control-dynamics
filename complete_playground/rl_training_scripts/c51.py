@@ -18,7 +18,7 @@ import torch.nn as nn
 import torch.optim as optim
 from collections import deque
 
-# from complete_playground.utils.buffer import ReplayBuffer
+from complete_playground.utils.buffer import ReplayBuffer
 from complete_playground.envs import cartpole, acrobot
 
 
@@ -181,7 +181,12 @@ if __name__ == "__main__":
     
 
     # Setup replay buffer
-    rb = deque(maxlen=buffer_size)
+    rb = ReplayBuffer(
+        buffer_size,
+        env.observation_space,
+        env.action_space,
+        device
+        )
     start_time = time.time()
 
     # Begin trial!

@@ -35,33 +35,35 @@ def parse_args():
         help="if toggled, cuda will be enabled by default")
     parser.add_argument("--track", type=bool, default=False, nargs="?", const=True,
         help="if toggled, this experiment will be tracked with Weights and Biases")
-
+    # --wandb-project-name
+    # --wandb-entity
+    # --capture-video
     parser.add_argument("--save-model", type=bool, default=False, nargs="?", const=True,
         help="whether to save model into the `runs/{run_name}` folder")
+    # --upload-model
+    # --hf-entity
 
 
-    # Algorithm specific arguments
     parser.add_argument("--env-id", type=str, default="cartpole",
         help="the id of the environment")
     parser.add_argument("--total-timesteps", type=int, default=500000,
         help="total timesteps of the experiments")
     parser.add_argument("--learning-rate", type=float, default=2.5e-4,
         help="the learning rate of the optimizer")
-    # parser.add_argument("--num-envs", type=int, default=1,
-    #     help="the number of parallel game environments")
+    # --num-envs
     parser.add_argument("--n-atoms", type=int, default=101,
         help="the number of atoms")
     parser.add_argument("--v-min", type=float, default=-100,
         help="the return lower bound")
     parser.add_argument("--v-max", type=float, default=100,
         help="the return upper bound")
-    parser.add_argument("--buffer-size", type=int, default=1000000,
+    parser.add_argument("--buffer-size", type=int, default=100000,
         help="the replay memory buffer size")
     parser.add_argument("--gamma", type=float, default=0.99,
         help="the discount factor gamma")
     parser.add_argument("--target-network-frequency", type=int, default=500,
         help="the timesteps it takes to update the target network")
-    parser.add_argument("--batch-size", type=int, default=2,
+    parser.add_argument("--batch-size", type=int, default=128,
         help="the batch size of sample from the reply memory")
     parser.add_argument("--start-e", type=float, default=1,
         help="the starting epsilon for exploration")
@@ -69,7 +71,7 @@ def parse_args():
         help="the ending epsilon for exploration")
     parser.add_argument("--exploration-fraction", type=float, default=0.5,
         help="the fraction of `total-timesteps` it takes from start-e to go end-e")
-    parser.add_argument("--learning-starts", type=int, default=100,
+    parser.add_argument("--learning-starts", type=int, default=10000,
         help="timestep to start learning")
     parser.add_argument("--train-frequency", type=int, default=10,
         help="the frequency of training")
@@ -196,7 +198,7 @@ if __name__ == "__main__":
         if random.random() < epsilon:   # choose random action
             actions = np.array([random.choice(tuple(env.action_space))])
         else:                           # choose action with highest future rewards
-            actions, pmf = q_network.get_action(torch.Tensor().unsqueeze().to(device))      # unsqueeze because only one env?
+            actions, pmf = q_network.get_action(torch.Tensor(obs).unsqueeze(dim=0).to(device))      # unsqueeze because only one env?
             actions = actions.cpu().numpy()
 
         # Execute a step in the game
@@ -256,7 +258,6 @@ if __name__ == "__main__":
 
         # TODO: Check if terminated or truncated, if so then record stats, reset and start over
         if done:
-            print("Environment resetting!")
             env.reset()
 
 

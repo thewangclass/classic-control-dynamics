@@ -77,11 +77,11 @@ class ReplayBuffer():
 
         # why normalize observations and rewards? 
         data = (
-            self.states[batch_inds, :],
+            self.states[batch_inds, :],                 # [batch_size, state_shape]
             self.actions[batch_inds, :],
             self.next_states[batch_inds, :],
-            self.dones[batch_inds],
-            self.rewards[batch_inds]
+            self.dones[batch_inds].reshape(-1, 1),      # necessary to get tensor into shape [batch, 1]
+            self.rewards[batch_inds].reshape(-1, 1)     # necessary to get tensor into shape [batch, 1]
         )
         return ReplayBufferSamples(*tuple(map(self.to_torch, data)))
     

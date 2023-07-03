@@ -220,7 +220,7 @@ if __name__ == "__main__":
             if global_step % args.train_frequency == 0:
                 data = rb.sample(batch_size)
                 with torch.no_grad():
-                    _, next_pmfs = target_network.get_action(data.next_observations)
+                    _, next_pmfs = target_network.get_action(data.next_observations)        # _ is batch size
                     next_atoms = data.rewards + args.gamma * target_network.atoms * (1 - data.dones)
                     # projection to an atom
                     delta_z = target_network.atoms[1] - target_network.atoms[0]

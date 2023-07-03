@@ -3,6 +3,7 @@ import numpy as np
 from typing import Union
 import torch as th
 from complete_playground.utils.common import get_device
+from complete_playground.utils.type_aliases import ReplayBufferSamples
 
 
 class ReplayBuffer():
@@ -45,7 +46,7 @@ class ReplayBuffer():
         self.next_states[self.pos] = np.array(next_state).copy()
         self.actions[self.pos] = np.array(action).copy()
         self.rewards[self.pos] = np.array(reward).copy()
-        self.truncations[self.pos] = np.array(terminated).copy()
+        self.terminations[self.pos] = np.array(terminated).copy()
         self.truncations[self.pos] = np.array(truncated).copy()
 
         self.pos += 1
@@ -60,7 +61,40 @@ class ReplayBuffer():
         self.pos = 0
         self.full = False
 
-    def sample_transitions(self, batch_size):
-        batch = np.random.permutation(len(self.frames))[:batch_size]
-        trans = np.array(len(self.frames))[batch]
-        return trans    
+    def sample_transitions(self, batch_size: int):
+        """
+        :param batch_size: Number of element to sample
+        :return:
+        """
+        upper_bound = self.buffer_size if self.full else self.pos
+        batch_inds = np.random.randint(0, upper_bound, size=batch_size)
+        return self._get_samples(batch_inds)
+    
+    def _get_samples(self, batch_inds: np.ndarray):
+        env_indices = np.random.randint(0, size=(len(batch_inds),))
+
+        # why normalize observations and rewards? 
+        data = {
+            self.states[batch_inds, :],
+            self.actions[batch_inds, :],
+            self.next_states[batch_inds, :],
+            self.rewards[batch_inds, :],
+            self.terminations[batch_inds, :],
+            self.truncations[batch_inds, :],
+        }
+
+        return ReplayBufferSamples(*tuple(map(self.to_torch, data)))
+    
+    def to_torch(self, array: np.ndarray, copy: bool = True) -> th.Tensor:
+        """
+        Convert a numpy array to a PyTorch tensor.
+        Note: it copies the data by default
+
+        :param array:
+        :param copy: Whether to copy or not the data (may be useful to avoid changing things
+            by reference). This argument is inoperative if the device is not the CPU.
+        :return:
+        """
+        if copy:
+            return th.tensor(array, device=self.device)
+        return th.as_tensor(array, device=self.device)

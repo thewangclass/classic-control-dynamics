@@ -223,7 +223,7 @@ if __name__ == "__main__":
                     _, next_pmfs = target_network.get_action(data.next_observations)
                     next_atoms = data.rewards + args.gamma * target_network.atoms * (1 - data.dones)
                     # projection to an atom
-                    delta_z = target_network.atoms[:,1] - target_network.atoms[0]
+                    delta_z = target_network.atoms[1] - target_network.atoms[0]
                     tz = next_atoms.clamp(args.v_min, args.v_max)
 
                     b = (tz - args.v_min) / delta_z
@@ -238,7 +238,7 @@ if __name__ == "__main__":
                         target_pmfs[i].index_add_(0, l[i].long(), d_m_l[i])
                         target_pmfs[i].index_add_(0, u[i].long(), d_m_u[i])
 
-                _, old_pmfs = q_network.get_action(data[:,0], data[:,2].flatten())
+                _, old_pmfs = q_network.get_action(data.observations, data.actions.flatten())
                 loss = (-(target_pmfs * old_pmfs.clamp(min=1e-5, max=1 - 1e-5).log()).sum(-1)).mean()
 
                 # if global_step % 100 == 0:
@@ -258,7 +258,7 @@ if __name__ == "__main__":
                 target_network.load_state_dict(q_network.state_dict())
 
         # TODO: Check if terminated or truncated, if so then record stats, reset and start over
-        if terminated:
+        if done:
             print("Environment resetting!")
             env.reset()
 

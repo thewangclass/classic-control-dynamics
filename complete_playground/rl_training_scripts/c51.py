@@ -257,7 +257,8 @@ if __name__ == "__main__":
                 target_network.load_state_dict(q_network.state_dict())
 
             if global_step % 10000 == 0:
-                print(global_step)
+                print("Global Step: ", global_step)
+                print("SPS:", int(global_step / (time.time() - start_time)))
 
         # TODO: Check if terminated or truncated, if so then record stats, reset and start over
         if done:

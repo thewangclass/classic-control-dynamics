@@ -159,21 +159,19 @@ class CartPole():
         if terminated or truncated:
             infos['final_observation'] = self.state
             infos['_final_observation'] = np.array(True, dtype=bool)
-            infos['final_info'] = np.array(
-                {
-                    'episode': {
-                        'r': np.array(
-                            reward,
-                            dtype=np.float32
-                        ),
-                        'l': np.array(
-                            reward,
-                            dtype=np.int32
-                        ),
-                        't': 'unassigned for now'
-                    }
+            infos['final_info'] = {
+                'episode': {
+                    'r': np.array(
+                        reward,
+                        dtype=np.float32
+                    ),
+                    'l': np.array(
+                        reward,
+                        dtype=np.int32
+                    ),
+                    't': 'unassigned for now'
                 }
-            )
+            }
             infos['_final_info'] = np.array(True, dtype=bool)
             
             if truncated:

@@ -203,6 +203,10 @@ if __name__ == "__main__":
 
         # Execute a step in the game
         next_obs, rewards, terminated, truncated, infos = env.step(actions)
+
+        # Record rewards for plotting purposes
+        if "final_info" in infos:
+            print(f"global_step={global_step}, episodic_return={infos['final_info']['episode']['r']}")
         
         # Handle final observation due to truncation
         real_next_obs = next_obs.copy()
@@ -256,10 +260,6 @@ if __name__ == "__main__":
             # update the target network according to specified frequency
             if global_step % args.target_network_frequency == 0:
                 target_network.load_state_dict(q_network.state_dict())
-
-            if global_step % 10000 == 0:
-                print("Global Step: ", global_step)
-                print("SPS:", int(global_step / (time.time() - start_time)))
 
         # TODO: Check if terminated or truncated, if so then record stats, reset and start over
         if terminated or truncated:

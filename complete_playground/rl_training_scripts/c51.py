@@ -206,7 +206,8 @@ if __name__ == "__main__":
         
         # Handle final observation due to truncation
         real_next_obs = next_obs.copy()
-        done = terminated or truncated
+        if truncated:
+                real_next_obs = infos["final_observation"]
 
         # Save data to replay buffer
         rb.add(obs, real_next_obs, actions, rewards, terminated, infos)

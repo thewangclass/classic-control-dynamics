@@ -156,7 +156,7 @@ class CartPole():
         truncated = self.steps >= self.max_episode_steps
 
         infos = {}
-        if terminated or truncated:
+        if terminated:
             infos['final_observation'] = self.state
             infos['_final_observation'] = np.array(True, dtype=bool)
             infos['final_info'] = np.array(
@@ -175,6 +175,8 @@ class CartPole():
                 }
             )
             infos['_final_info'] = np.array(True, dtype=bool)
+        if truncated:
+            infos['TimeLimit.truncated']: True
         
         
         # for now, we have step return same thing as gymnasium does

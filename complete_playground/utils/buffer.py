@@ -1,6 +1,6 @@
 from collections import deque
 import numpy as np
-from typing import Union
+from typing import Union, List, Dict, Any
 import torch as th
 from complete_playground.utils.common import get_device
 from complete_playground.utils.type_aliases import ReplayBufferSamples
@@ -26,10 +26,8 @@ class ReplayBuffer():
 
         self.actions = np.zeros((self.buffer_size, action_dim), dtype=np.int64)
         self.rewards = np.zeros(self.buffer_size, dtype=np.float32)
-        self.dones = np.zeros(self.buffer_size, dtype=np.float32)
         self.terminations = np.zeros(self.buffer_size, dtype=np.float32)
-        self.truncations = np.zeros(self.buffer_size, dtype=np.float32)
-        # self.info = deque(maxlen = max_len)
+        self.timeouts = np.zeros(self.buffer_size, dtype=np.float32)        # infos
 
         self.pos = 0
         self.full = False
@@ -37,14 +35,13 @@ class ReplayBuffer():
 
     def add(
             self, 
-            state, 
-            next_state, 
-            action, 
-            reward, 
-            terminated, 
-            truncated, 
-            done,
-            info):
+            state: np.ndarray, 
+            next_state: np.ndarray, 
+            action: np.ndarray, 
+            reward: np.ndarray, 
+            terminated: np.ndarray, 
+            infos: Dict[str, Any]
+    ) -> None:
         
         # sb3, copy to avoid modification by reference
         self.states[self.pos] = np.array(state).copy()
@@ -52,8 +49,7 @@ class ReplayBuffer():
         self.actions[self.pos] = np.array(action).copy()
         self.rewards[self.pos] = np.array(reward).copy()
         self.terminations[self.pos] = np.array(terminated).copy()
-        self.truncations[self.pos] = np.array(truncated).copy()
-        self.dones[self.pos] = np.array(done).copy()
+        self.timeouts[self.pos] = np.array(infos.get("TimeLimit.truncated", False)).copy()
 
         self.pos += 1
         if self.pos == self.buffer_size:
@@ -84,7 +80,7 @@ class ReplayBuffer():
             self.states[batch_inds, :],                 # [batch_size, state_shape]
             self.actions[batch_inds, :],
             self.next_states[batch_inds, :],
-            self.dones[batch_inds].reshape(-1, 1),      # necessary to get tensor into shape [batch, 1]
+            (self.terminations[batch_inds] * (1 - self.timeouts[batch_inds])).reshape(-1, 1),      # necessary to get tensor into shape [batch, 1]
             self.rewards[batch_inds].reshape(-1, 1)     # necessary to get tensor into shape [batch, 1]
         )
         return ReplayBufferSamples(*tuple(map(self.to_torch, data)))

@@ -46,7 +46,7 @@ def parse_args():
 
     parser.add_argument("--env-id", type=str, default="cartpole",
         help="the id of the environment")
-    parser.add_argument("--total-timesteps", type=int, default=10000,
+    parser.add_argument("--total-timesteps", type=int, default=100000,
         help="total timesteps of the experiments")
     parser.add_argument("--learning-rate", type=float, default=2.5e-4,
         help="the learning rate of the optimizer")
@@ -103,9 +103,9 @@ class QNetwork(nn.Module):
 
         self.v_min = v_min
         self.v_max = v_max
-        self.dz = (v_max-v_min) / (n_atoms - 1)     # width of each "category"
-        self.df = df                                # discount factor for future rewards
-        self.epsilon_start = start_eps                    # episilon value dictates greedy/explore
+        self.dz = (v_max-v_min) / (n_atoms - 1)            # width of each "category"
+        self.df = df                                       # discount factor for future rewards
+        self.epsilon_start = start_eps                     # episilon value dictates greedy/explore
         self.epsilon_end = end_eps
 
         self.start_train_at = start_train_at
@@ -202,19 +202,19 @@ if __name__ == "__main__":
             actions = actions.cpu().numpy()
 
         # Execute a step in the game
-        # print(actions)
         next_obs, rewards, terminated, truncated, infos = env.step(actions)
         
-        # TODO: Handle final observation?
-        # Save data to replay buffer
+        # Handle final observation due to truncation
         real_next_obs = next_obs.copy()
         done = terminated or truncated
-        rb.add(obs, real_next_obs, actions, rewards, terminated, truncated, done, infos)
+
+        # Save data to replay buffer
+        rb.add(obs, real_next_obs, actions, rewards, terminated, infos)
 
         # Set state to next state
         obs = next_obs
 
-        # TODO: Start training when the timestep is > time to start training
+        # Start training when the timestep is > time to start training
         if global_step > args.learning_starts:
             if global_step % args.train_frequency == 0:
                 data = rb.sample(batch_size)
@@ -240,11 +240,11 @@ if __name__ == "__main__":
                 _, old_pmfs = q_network.get_action(data.observations, data.actions.flatten())
                 loss = (-(target_pmfs * old_pmfs.clamp(min=1e-5, max=1 - 1e-5).log()).sum(-1)).mean()
 
-                # if global_step % 100 == 0:
+                if global_step % 100 == 0:
                 #     writer.add_scalar("losses/loss", loss.item(), global_step)
                 #     old_val = (old_pmfs * q_network.atoms).sum(1)
                 #     writer.add_scalar("losses/q_values", old_val.mean().item(), global_step)
-                #     print("SPS:", int(global_step / (time.time() - start_time)))
+                    print("SPS:", int(global_step / (time.time() - start_time)))
                 #     writer.add_scalar("charts/SPS", int(global_step / (time.time() - start_time)), global_step)
 
                 # optimize the model
@@ -261,7 +261,7 @@ if __name__ == "__main__":
                 print("SPS:", int(global_step / (time.time() - start_time)))
 
         # TODO: Check if terminated or truncated, if so then record stats, reset and start over
-        if done:
+        if terminated or truncated:
             env.reset()
 
 

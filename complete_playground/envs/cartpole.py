@@ -162,11 +162,11 @@ class CartPole():
             infos['final_info'] = {
                 'episode': {
                     'r': np.array(
-                        reward,
+                        self.steps,
                         dtype=np.float32
                     ),
                     'l': np.array(
-                        reward,
+                        self.steps,
                         dtype=np.int32
                     ),
                     't': 'unassigned for now'

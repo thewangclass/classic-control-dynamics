@@ -4,6 +4,8 @@ Framework from: https://github.com/Farama-Foundation/Gymnasium/blob/main/gymnasi
 Dynamics from: https://coneural.org/florian/papers/05_cart_pole.pdf
 
 """
+import sys
+sys.path.append("/home/thewangclass/projects/classic-control-dynamics/")
 import time
 import math
 import numpy as np
@@ -130,24 +132,13 @@ class CartPole():
         # assert action in self.action_space, f"invalid action chosen: {action}"            # TODO: cannot check if ndarray is in here
         assert self.state is not None, "Call reset before step"
 
+        # update state
         force = self.force_mag if action == 1 else -self.force_mag
         self.calc_x_acc(force)  # calc_x_acc updates theta_acc first to be used in x_acc calculation
-        # print("x_acc is: {0}, \ntheta_acc is: {1}".format(self.x_acc, self.theta_acc))
         self.state = rk4(self.dynamics_cartpole, self.state, force, self.tau)
 
-        x = self.state[0]
-        theta = self.state[2]
-        # check if episode ends due to termination
-        terminated = bool(
-            x < -self.x_threshold
-            or x > self.x_threshold
-            or theta < -self.theta_threshold_radians
-            or theta > self.theta_threshold_radians
-        )
-
-        self.steps += 1
-        truncated = self.steps >= self.max_episode_steps
-
+        # check if episode ends due to termination and update reward accordingly
+        terminated = self.check_termination(self.state)
         if not terminated:
             reward = 1.0
         elif self.steps_beyond_terminated is None:
@@ -155,18 +146,50 @@ class CartPole():
             self.steps_beyond_terminated = 0
             reward = 1.0
         else:
-            # arrives here only if terminated = True and steps_beyond_terminated is not None
+            # arrives here only if terminated = True and steps_beyond_terminated is not None; call reset!
+            print('Make sure you call reset()')
             self.steps_beyond_terminated += 1
-            print("You are calling 'step()' even though this "
-                    "environment has already returned terminated = True. You "
-                    "should always call 'reset()' once you receive 'terminated = "
-                    "True' -- any further steps are undefined behavior.")
             reward = 0.0
+
+        # check truncation (episode ending due to time limit or some other reason not defined as part of the task MDP) 
+        self.steps += 1
+        truncated = self.steps >= self.max_episode_steps
+
+        infos = {}
+        if terminated or truncated:
+            infos['final_observation'] = self.state
+            infos['_final_observation'] = np.array(True, dtype=bool)
+            infos['final_info'] = np.array(
+                {
+                    'episode': {
+                        'r': np.array(
+                            reward,
+                            dtype=np.float32
+                        ),
+                        'l': np.array(
+                            reward,
+                            dtype=np.int32
+                        ),
+                        't': 'unassigned for now'
+                    }
+                }
+            )
+            infos['_final_info'] = np.array(True, dtype=bool)
+        
         
         # for now, we have step return same thing as gymnasium does
         # next_state, reward, terminated, truncated, info
-        return np.array(self.state, dtype=np.float32), reward, terminated, truncated, {}
+        return np.array(self.state, dtype=np.float32), reward, terminated, truncated, infos
 
+    def check_termination(self, state):
+        x = state[0]
+        theta = state[2]
+        return bool(
+            x < -self.x_threshold
+            or x > self.x_threshold
+            or theta < -self.theta_threshold_radians
+            or theta > self.theta_threshold_radians
+        )
 
     def dynamics_cartpole(self, current_state, action):
         # current state is comprised of x, x_dot, theta, theta_dot

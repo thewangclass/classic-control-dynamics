@@ -5,10 +5,10 @@ Resources used
 2) https://github.com/fedetask/categorical-dqn/blob/master/categorical_dqn.py
 
 """
+import os
 import sys
 sys.path.append("/home/thewangclass/projects/classic-control-dynamics/")
 import argparse
-import os
 import time
 import random
 
@@ -266,7 +266,7 @@ if __name__ == "__main__":
 
 
     if args.save_model:
-        model_path = f"{os.getcwd()}/runs/{run_name}_{args.exp_name}.cleanrl_model"
+        model_path = f"{os.getcwd()}/runs/{run_name}_{args.exp_name}_{args.total_timesteps}timesteps.model"
         model_data = {
             "model_weights": q_network.state_dict(),
             "args": vars(args),

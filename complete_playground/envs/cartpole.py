@@ -135,7 +135,7 @@ class CartPole():
         self.steps_beyond_terminated = None
         self.steps = 0
 
-        return np.array(self.state, dtype=np.float32), {}
+        return np.array(self.state, dtype=np.float32)
 
 
     def step(self, action):

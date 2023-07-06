@@ -160,7 +160,7 @@ class Acrobot():
         ##################################################       
         self.steps = 0
 
-        return np.array(self.state, dtype=np.float32), {}
+        return np.array(self.state, dtype=np.float32)
     
     
     def step(self, action):
@@ -168,14 +168,17 @@ class Acrobot():
         assert self.state is not None, "Call reset before step"
 
         # update state
-        current_state = self.state
         torque = self.avail_torque[action]  # torque is determined by the action chosen: -1, 0, 1
         if self.torque_noise_max > 0:       # add random noise to torque
             torque += self.np_random.uniform(
                 -self.torque_noise_max, self.torque_noise_max
             )        
         ns = rk4(self.dynamics_acrobot, self.state, torque, self.tau)
-        self.state = self.wrap_and_bound(ns)
+        ns[0] = wrap(ns[0], -pi, pi)
+        ns[1] = wrap(ns[1], -pi, pi)
+        ns[2] = bound(ns[2], -self.max_vel_1, self.max_vel_1)
+        ns[3] = bound(ns[3], -self.max_vel_2, self.max_vel_2)
+        self.state = ns
 
         # check if episode ends due to termination and update reward accordingly
         terminated = self.check_termination()
@@ -209,13 +212,6 @@ class Acrobot():
                 infos['TimeLimit.truncated'] = True
 
         return np.array(self.state, dtype=np.float32), reward, terminated, truncated, infos
-
-    def wrap_and_bound(self, state):
-        state[0] = wrap(state[0], -pi, pi)
-        state[1] = wrap(state[1], -pi, pi)
-        state[2] = bound(state[2], -self.max_vel_1, self.max_vel_1)
-        state[3] = bound(state[3], -self.max_vel_2, self.max_vel_2)
-        return state
 
     def dynamics_acrobot(self, current_state, action):
         m1 = self.link_mass_1
@@ -253,7 +249,7 @@ class Acrobot():
             a + d2 / d1 * phi1 - m2 * l1 * lc2 * dtheta1**2 * sin(theta2) - phi2
         ) / (m2 * lc2**2 + I2 - d2**2 / d1)
         ddtheta1 = -(d2 * ddtheta2 + phi1) / d1
-        return np.array([dtheta1, dtheta2, ddtheta1[0], ddtheta2[0]], dtype=np.float32)
+        return np.array([dtheta1, dtheta2, ddtheta1, ddtheta2], dtype=np.float32)
 
     
     def check_termination(self):

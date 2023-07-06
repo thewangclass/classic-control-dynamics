@@ -143,7 +143,8 @@ if __name__ == "__main__":
     print(device)
 
     # setup environment
-    env = cartpole.CartPole()
+    # env = cartpole.CartPole()
+    env = acrobot.Acrobot()
     # env = args.env_id   # cartpole/acrobot for now
 
     # Initialize Network
@@ -232,7 +233,7 @@ if __name__ == "__main__":
                     writer.add_scalar("losses/loss", loss.item(), global_step)
                     old_val = (old_pmfs * q_network.atoms).sum(1)
                     writer.add_scalar("losses/q_values", old_val.mean().item(), global_step)
-                    print("SPS:", int(global_step / (time.time() - start_time)))
+                    # print("SPS:", int(global_step / (time.time() - start_time)))
                     writer.add_scalar("charts/SPS", int(global_step / (time.time() - start_time)), global_step)
 
                 # optimize the model

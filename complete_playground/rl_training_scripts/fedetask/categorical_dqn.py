@@ -3,6 +3,7 @@ import copy
 import random
 import tqdm
 import json
+import time
 
 import gym
 import torch
@@ -10,7 +11,7 @@ import torch
 import sys
 sys.path.append("/home/thewangclass/projects/classic-control-dynamics/")
 
-from complete_playground.envs import cartpole
+from complete_playground.envs import cartpole, acrobot
 import complete_playground.rl_training_scripts.fedetask.memory as memory
 from complete_playground.rl_training_scripts.fedetask.memory import Transition
 import complete_playground.rl_training_scripts.fedetask.networks as networks
@@ -187,7 +188,7 @@ if __name__ == '__main__':
                         help='Exploration noise. Defaults to 0.1.')
     parser.add_argument('--n-steps', type=int, required=False, default=20000,
                         help='Number of training steps. Defaults to 2000.')
-    parser.add_argument('--out-file', type=str, required=False, default=None,
+    parser.add_argument('--out-file', type=str, required=False, default='{run_name}',
                         help='If specified, stores the training plot into the given file. The '
                              'plot is stored as a json object with the keys \'steps\' and '
                              '\'rewards\'.')
@@ -195,7 +196,8 @@ if __name__ == '__main__':
 
     #############################################
     # Modified code section
-    env = cartpole.CartPole()
+    # env = cartpole.CartPole()
+    env = acrobot.Acrobot()
     state_dim = env.observation_space.shape[0]
     act_dim = len(env.action_space)       # env.action_space.n
 
@@ -216,6 +218,7 @@ if __name__ == '__main__':
                           update_every=update_net_every, epsilon=epsilon)
     plot = DDQN.train(env=env, n_steps=n_steps)
 
+    run_name = f"{args.env}__{int(time.time())}"
     if args.out_file is not None:
         with open(args.out_file, 'w') as fp:
             json.dump({'steps': plot.x.tolist(), 'rewards': plot.y.tolist()}, fp)

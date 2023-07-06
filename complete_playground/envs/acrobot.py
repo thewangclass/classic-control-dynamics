@@ -120,7 +120,7 @@ class Acrobot():
         self.link_com_pos_2 = 0.5   # [m] position of the center of mass of link 2
         self.link_moi = 1.0         # moment of inertia for both links
 
-        self.avail_torque = [-1.0, 0.0, +1]
+        self.avail_torque = np.array([-1.0, 0.0, +1])
         self.torque_noise_max = 0.0
 
         ##################################################
@@ -253,7 +253,7 @@ class Acrobot():
             a + d2 / d1 * phi1 - m2 * l1 * lc2 * dtheta1**2 * sin(theta2) - phi2
         ) / (m2 * lc2**2 + I2 - d2**2 / d1)
         ddtheta1 = -(d2 * ddtheta2 + phi1) / d1
-        return np.array([dtheta1, dtheta2, ddtheta1, ddtheta2], dtype=np.float32)
+        return np.array([dtheta1, dtheta2, ddtheta1[0], ddtheta2[0]], dtype=np.float32)
 
     
     def check_termination(self):

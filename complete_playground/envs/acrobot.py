@@ -2,13 +2,12 @@
 Classic cart-pole system implemented by Rich Sutton et al.
 Framework from: https://github.com/Farama-Foundation/Gymnasium/blob/main/gymnasium/envs/classic_control/acrobot.py
 """
+import sys
+sys.path.append("/home/thewangclass/projects/classic-control-dynamics/")
 import numpy as np
-
 from math import cos, pi, sin
 from complete_playground.envs.utils import wrap, bound
 from complete_playground.envs.utils import runge_kutta as rk4
-
-
 
 __copyright__ = "Copyright 2013, RLPy http://acl.mit.edu/RLPy"
 __credits__ = [
@@ -95,8 +94,23 @@ class Acrobot():
 """
 
     def __init__(self):
+        ##################################################
+        # EPISODE ENDING
+        ##################################################
         self.max_episode_steps = 500 # going over this causes truncation
+        self.steps = 0
 
+        # constraints
+        self.max_vel_1 = 4 * pi     # values taken from gymnasium acrobot
+        self.max_vel_2 = 9 * pi
+        self.upper_bound = np.array(
+            [np.pi, np.pi, self.max_vel_1, self.max_vel_2], dtype=np.float32
+        )
+        self.lower_bound = -self.upper_bound
+
+        ##################################################
+        # SYSTEM DIMENSIONS
+        ##################################################
         self.gravity = 9.8
         self.link_length_1 = 1.0    # [m]
         self.link_length_2 = 1.0    # [m]
@@ -106,31 +120,27 @@ class Acrobot():
         self.link_com_pos_2 = 0.5   # [m] position of the center of mass of link 2
         self.link_moi = 1.0         # moment of inertia for both links
 
-        self.max_vel_1 = 4 * pi     # values taken from gymnasium acrobot
-        self.max_vel_2 = 9 * pi
-
         self.avail_torque = [-1.0, 0.0, +1]
         self.torque_noise_max = 0.0
 
-        # episode ending possibilities
-        self.steps = 0
-        self.steps_beyond_terminated = None     # currently does nothing
+        ##################################################
+        # CALCULATION OPTIONS
+        ##################################################
+        # metadata lists "render_fps" as 50. This is where the tau value of 0.02 comes from because 50 frames per second results in 1/50 which is 0.02 seconds per frame.
+        self.tau = 0.02  # seconds between state updates, our delta_t
+        self.kinematics_integrator = "rk4"  # we use rk4 for our integration
 
+
+        ##################################################
+        # DEFINE ACTION AND OBSERVATION SPACE
+        ##################################################
         # Possible actions the acrobot can take
         # 0: apply -1 torque to the actuated joint
         # 1: apply 0 torque to the actuated joint
         # 2: apply 1 torque to the actuated joint
         self.action_space = {0, 1, 2}
-
-        # timestep
-        self.tau = 0.02
-
-        # Consider renaming these variables as bounds
-        self.upper_bound = np.array(
-            [np.pi, np.pi, self.max_vel_1, self.max_vel_2], dtype=np.float32
-        )
-        self.lower_bound = -self.upper_bound
-
+        self.action_type = "Discrete"
+        self.observation_space = self.upper_bound
         self.state = None
 
     def reset(self):
@@ -138,43 +148,74 @@ class Acrobot():
         Reset initial state for next episode.
         High is given an initial default value taken from gymnasium acrobot.py. This is to provide some variation in the starting state and make the model learn a more generalizable policy.
         """
+        ##################################################
+        # INITIALIZE NEW RANDOM STARTING STATE
+        ##################################################
         high = 0.1
         low = -high
-
         self.state = np.random.uniform(low=low, high=high, size=(4,)).astype(np.float32)
 
+        ##################################################
+        # RESET STEPS
+        ##################################################       
         self.steps = 0
-        self.steps_beyond_terminated = None
 
-
-        return self.state
+        return np.array(self.state, dtype0ns=np.float32), {}
     
     
     def step(self, action):
         # Make sure valid action and state are present
         assert self.state is not None, "Call reset before step"
 
-        # Grab current state
+        # update state
         current_state = self.state
-        torque = self.avail_torque[action]  # # torque is determined by the action chosen: -1, 0, 1
+        torque = self.avail_torque[action]  # torque is determined by the action chosen: -1, 0, 1
         if self.torque_noise_max > 0:       # add random noise to torque
             torque += self.np_random.uniform(
                 -self.torque_noise_max, self.torque_noise_max
-            )
-        
+            )        
         ns = rk4(self.dynamics_acrobot, self.state, torque, self.tau)
-        ns[0] = wrap(ns[0], -pi, pi)
-        ns[1] = wrap(ns[1], -pi, pi)
-        ns[2] = bound(ns[2], -self.max_vel_1, self.max_vel_1)
-        ns[3] = bound(ns[3], -self.max_vel_2, self.max_vel_2)
-        self.state = ns
+        self.state = self.wrap_and_bound(ns)
 
-        # Check if terminated or truncated
-        terminated = self._terminal()
+        # check if episode ends due to termination and update reward accordingly
+        terminated = self.check_termination()
         reward = -1.0 if not terminated else 0.0
+
+        # check truncation
+        self.steps += 1
         truncated = self.steps >= self.max_episode_steps
 
-        return np.array(self.state, dtype=np.float32), reward, terminated, truncated, {}
+        # generate infos for last timestep of episode
+        infos = {}
+        if terminated or truncated:
+            infos['final_observation'] = self.state
+            infos['_final_observation'] = np.array(True, dtype=bool)
+            infos['final_info'] = {
+                'episode': {
+                    'r': np.array(
+                        np.array([self.steps]),
+                        dtype=np.float32
+                    ),
+                    'l': np.array(
+                        np.array([self.steps]),
+                        dtype=np.int32
+                    ),
+                    't': 'unassigned for now'
+                }
+            }
+            infos['_final_info'] = np.array(True, dtype=bool)
+            
+            if truncated:
+                infos['TimeLimit.truncated'] = True
+
+        return np.array(self.state, dtype=np.float32), reward, terminated, truncated, infos
+
+    def wrap_and_bound(self, state):
+        state[0] = wrap(state[0], -pi, pi)
+        state[1] = wrap(state[1], -pi, pi)
+        state[2] = bound(state[2], -self.max_vel_1, self.max_vel_1)
+        state[3] = bound(state[3], -self.max_vel_2, self.max_vel_2)
+        return state
 
     def dynamics_acrobot(self, current_state, action):
         m1 = self.link_mass_1
@@ -215,7 +256,7 @@ class Acrobot():
         return np.array([dtheta1, dtheta2, ddtheta1, ddtheta2], dtype=np.float32)
 
     
-    def _terminal(self):
+    def check_termination(self):
         s = self.state
         assert s is not None, "Call reset before using AcrobotEnv object."
         return bool(-cos(s[0]) - cos(s[1] + s[0]) > 1.0)

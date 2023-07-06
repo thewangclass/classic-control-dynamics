@@ -100,18 +100,11 @@ class CartPole():
         self.x_acc = None
 
         ##################################################
-        # CALCULATION OPTIONS
-        ##################################################
-        # metadata lists "render_fps" as 50. This is where the tau value of 0.02 comes from because 50 frames per second results in 1/50 which is 0.02 seconds per frame.
-        self.tau = 0.02  # seconds between state updates, our delta_t
-        self.kinematics_integrator = "rk4"  # we use rk4 for our integration
-
-
-        ##################################################
         # DEFINE ACTION AND OBSERVATION SPACE
         ##################################################
         # Possible actions the cartpole can take
-        # 0 push cart to left, 1 push cart to right
+        # 0: push cart to left
+        # 1: push cart to right
         self.action_space = {0, 1}
         self.action_type = "Discrete"  # used in buffer to determine shape of memory
         self.observation_space = self.upper_bound # to use in network for first layer input
@@ -122,10 +115,16 @@ class CartPole():
         Reset initial state for next session.
         High is given an initial default value. Default value is taken from gymnasium cartpole.py. This is to provide some variation in the starting state and make the model learn a more generalizable policy.
         """
+        ##################################################
+        # INITIALIZE NEW RANDOM STARTING STATE
+        ##################################################
         high = 0.01    
         low = -high    
         self.state = np.random.uniform(low=low, high=high, size=(4,))
 
+        ##################################################
+        # RESET STEPS
+        ##################################################   
         self.steps_beyond_terminated = None
         self.steps = 0
 
@@ -183,8 +182,6 @@ class CartPole():
             if truncated:
                 infos['TimeLimit.truncated'] = True
         
-        
-        # for now, we have step return same thing as gymnasium does
         # next_state, reward, terminated, truncated, info
         return np.array(self.state, dtype=np.float32), reward, terminated, truncated, infos
 

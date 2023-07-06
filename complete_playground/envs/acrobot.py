@@ -160,7 +160,7 @@ class Acrobot():
         ##################################################       
         self.steps = 0
 
-        return np.array(self.state, dtype0ns=np.float32), {}
+        return np.array(self.state, dtype=np.float32), {}
     
     
     def step(self, action):

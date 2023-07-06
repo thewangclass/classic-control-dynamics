@@ -193,11 +193,11 @@ class Acrobot():
             infos['final_info'] = {
                 'episode': {
                     'r': np.array(
-                        np.array([self.steps]),
+                        np.array([0 - self.steps]),
                         dtype=np.float32
                     ),
                     'l': np.array(
-                        np.array([self.steps]),
+                        np.array([0 - self.steps]),
                         dtype=np.int32
                     ),
                     't': 'unassigned for now'

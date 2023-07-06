@@ -53,8 +53,35 @@ class CartPole():
 
 
     def __init__(self) -> None:
+        ##################################################
+        # EPISODE ENDING
+        ##################################################
         self.max_episode_steps = 500    # going over this causes truncation
+        self.steps = 0
+        self.steps_beyond_terminated = None
 
+        # Angle at which to fail the episode: pole below this angle means failure
+        self.theta_threshold_radians = 12 * 2 * math.pi / 360
+        # Left/right bounds of space: leaving these boundaries means failure
+        self.x_threshold = 2.4
+
+        # Angle limit set to 2 * theta_threshold_radians so failing observation
+        # is still within bounds.
+        # Really these should be called upper and lower bounds.
+        self.upper_bound = np.array(
+            [
+                self.x_threshold * 2,
+                np.inf,    # np.finfo(np.float32).max,
+                self.theta_threshold_radians * 2,
+                np.inf,     # np.finfo(np.float32).max,
+            ],
+            dtype=np.float32,
+        )
+        self.lower_bound = -self.upper_bound
+
+        ##################################################
+        # SYSTEM DIMENSIONS
+        ##################################################
         self.gravity = 9.8
         self.masscart = 1.0
         self.masspole = 0.1
@@ -72,43 +99,22 @@ class CartPole():
         self.theta_acc = None
         self.x_acc = None
 
+        ##################################################
+        # CALCULATION OPTIONS
+        ##################################################
         # metadata lists "render_fps" as 50. This is where the tau value of 0.02 comes from because 50 frames per second results in 1/50 which is 0.02 seconds per frame.
         self.tau = 0.02  # seconds between state updates, our delta_t
         self.kinematics_integrator = "rk4"  # we use rk4 for our integration
 
-        # Angle at which to fail the episode: pole below this angle means failure
-        self.theta_threshold_radians = 12 * 2 * math.pi / 360
-        # Left/right bounds of space: leaving these boundaries means failure
-        self.x_threshold = 2.4
 
-        # episode ending possibilities
-        self.steps = 0
-        self.steps_beyond_terminated = None
-        
-
+        ##################################################
+        # DEFINE ACTION AND OBSERVATION SPACE
+        ##################################################
         # Possible actions the cartpole can take
         # 0 push cart to left, 1 push cart to right
         self.action_space = {0, 1}
-        self.action_type = "Discrete"
-
-        # Angle limit set to 2 * theta_threshold_radians so failing observation
-        # is still within bounds.
-        # Really these should be called upper and lower bounds.
-        self.upper_bound = np.array(
-            [
-                self.x_threshold * 2,
-                np.inf,    # np.finfo(np.float32).max,
-                self.theta_threshold_radians * 2,
-                np.inf,     # np.finfo(np.float32).max,
-            ],
-            dtype=np.float32,
-        )
-        self.lower_bound = -self.upper_bound
-        self.observation_space = self.upper_bound           # to use in network for first layer input
-        # print(self.observation_space.shape)
-
-        # CartPole represented by (CartPosition, CartVelocity, PoleAngle, PoleAngVelocity)
-        # Starting state is initialized randomly in reset()
+        self.action_type = "Discrete"  # used in buffer to determine shape of memory
+        self.observation_space = self.upper_bound # to use in network for first layer input
         self.state = None
 
     def reset(self):
@@ -162,11 +168,11 @@ class CartPole():
             infos['final_info'] = {
                 'episode': {
                     'r': np.array(
-                        self.steps,
+                        np.array([self.steps]),
                         dtype=np.float32
                     ),
                     'l': np.array(
-                        self.steps,
+                        np.array([self.steps]),
                         dtype=np.int32
                     ),
                     't': 'unassigned for now'

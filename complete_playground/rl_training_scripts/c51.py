@@ -16,7 +16,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from collections import deque
+from torch.utils.tensorboard import SummaryWriter
 
 from complete_playground.utils.buffer import ReplayBuffer
 from complete_playground.envs import cartpole, acrobot
@@ -100,19 +100,6 @@ class QNetwork(nn.Module):
             nn.Linear(84, self.n * n_atoms)             # 2 action_space x 101 number_atoms
         )
 
-
-        self.v_min = v_min
-        self.v_max = v_max
-        self.dz = (v_max-v_min) / (n_atoms - 1)            # width of each "category"
-        self.df = df                                       # discount factor for future rewards
-        self.epsilon_start = start_eps                     # episilon value dictates greedy/explore
-        self.epsilon_end = end_eps
-
-        self.start_train_at = start_train_at
-        self.buffer_size = buffer_size
-        self.batch_size = batch_size
-        self.update_every = training_freq           # https://livebook.manning.com/concept/reinforcement-learning/target-network
-
     def get_action(self, x, action=None):
         # x = x.unsqueeze(0)              # cleanrl passes in tensor of [1, obs_shape], moved unsqueeze to exploit choosing
         logits = self.network(x)
@@ -140,6 +127,12 @@ if __name__ == "__main__":
     args = parse_args()
     run_name = f"{args.env_id}__{args.exp_name}__{args.seed}__{int(time.time())}"   # create experiment run name
 
+    writer = SummaryWriter(f"runs/{run_name}")
+    writer.add_text(
+        "hyperparameters",
+        "|param|value|\n|-|-|\n%s" % ("\n".join([f"|{key}|{value}|" for key, value in vars(args).items()])),
+    )
+
     random.seed(args.seed)
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
@@ -154,19 +147,6 @@ if __name__ == "__main__":
     # env = args.env_id   # cartpole/acrobot for now
 
     # Initialize Network
-    n_atoms = args.n_atoms
-    v_min = args.v_min
-    v_max = args.v_max
-    df = args.gamma
-    buffer_size = args.buffer_size
-    batch_size = args.batch_size
-    lr = args.learning_rate
-    network_update = args.target_network_frequency
-    training_freq = args.train_frequency
-    start_eps = args.start_e
-    end_eps = args.end_e
-    start_train_at = args.learning_starts
-
     # Create Model and Choose Optimizer
     q_network = QNetwork(env, n_atoms=args.n_atoms, v_min=args.v_min, v_max=args.v_max).to(device)
     optimizer = optim.Adam(q_network.parameters(), lr=args.learning_rate, eps=0.01 / args.batch_size)
@@ -181,7 +161,7 @@ if __name__ == "__main__":
 
     # Setup replay buffer
     rb = ReplayBuffer(
-        buffer_size,
+        args.buffer_size,
         env.observation_space,
         env.action_type,
         device
@@ -207,7 +187,10 @@ if __name__ == "__main__":
         # Record rewards for plotting purposes
         if "final_info" in infos:
             print(f"global_step={global_step}, episodic_return={infos['final_info']['episode']['r']}")
-        
+            writer.add_scalar("charts/episodic_return", infos['final_info']['episode']['r'], global_step)
+            writer.add_scalar("charts/episodic_length", infos['final_info']['episode']['r'], global_step)
+            writer.add_scalar("charts/epsilon", epsilon, global_step)
+
         # Handle final observation due to truncation
         real_next_obs = next_obs.copy()
         if truncated:
@@ -222,7 +205,7 @@ if __name__ == "__main__":
         # Start training when the timestep is > time to start training
         if global_step > args.learning_starts:
             if global_step % args.train_frequency == 0:
-                data = rb.sample(batch_size)
+                data = rb.sample(args.batch_size)
                 with torch.no_grad():
                     _, next_pmfs = target_network.get_action(data.next_observations)        # _ is batch size
                     next_atoms = data.rewards + args.gamma * target_network.atoms * (1 - data.dones)
@@ -246,11 +229,11 @@ if __name__ == "__main__":
                 loss = (-(target_pmfs * old_pmfs.clamp(min=1e-5, max=1 - 1e-5).log()).sum(-1)).mean()
 
                 if global_step % 100 == 0:
-                #     writer.add_scalar("losses/loss", loss.item(), global_step)
-                #     old_val = (old_pmfs * q_network.atoms).sum(1)
-                #     writer.add_scalar("losses/q_values", old_val.mean().item(), global_step)
+                    writer.add_scalar("losses/loss", loss.item(), global_step)
+                    old_val = (old_pmfs * q_network.atoms).sum(1)
+                    writer.add_scalar("losses/q_values", old_val.mean().item(), global_step)
                     print("SPS:", int(global_step / (time.time() - start_time)))
-                #     writer.add_scalar("charts/SPS", int(global_step / (time.time() - start_time)), global_step)
+                    writer.add_scalar("charts/SPS", int(global_step / (time.time() - start_time)), global_step)
 
                 # optimize the model
                 optimizer.zero_grad()

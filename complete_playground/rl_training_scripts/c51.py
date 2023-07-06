@@ -46,7 +46,7 @@ def parse_args():
 
     parser.add_argument("--env-id", type=str, default="cartpole",
         help="the id of the environment")
-    parser.add_argument("--total-timesteps", type=int, default=100000,
+    parser.add_argument("--total-timesteps", type=int, default=1000000,
         help="total timesteps of the experiments")
     parser.add_argument("--learning-rate", type=float, default=2.5e-4,
         help="the learning rate of the optimizer")

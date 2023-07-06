@@ -100,6 +100,13 @@ class CartPole():
         self.x_acc = None
 
         ##################################################
+        # CALCULATION OPTIONS
+        ##################################################
+        # metadata lists "render_fps" as 50. This is where the tau value of 0.02 comes from because 50 frames per second results in 1/50 which is 0.02 seconds per frame.
+        self.tau = 0.02  # seconds between state updates, our delta_t
+        self.kinematics_integrator = "rk4"  # we use rk4 for our integration
+
+        ##################################################
         # DEFINE ACTION AND OBSERVATION SPACE
         ##################################################
         # Possible actions the cartpole can take

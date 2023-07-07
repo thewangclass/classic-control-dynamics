@@ -143,7 +143,7 @@ class CartPole():
         self.episode_reward = 0
         self.episode_length = 0
 
-        return np.array(self.state, dtype=np.float32)
+        return np.array([self.state], dtype=np.float32)
 
 
     def step(self, action):
@@ -201,7 +201,7 @@ class CartPole():
                 info['TimeLimit.truncated'] = True
         
         # next_state, reward, terminated, truncated, info
-        return np.array(self.state, dtype=np.float32), reward, terminated, truncated, info
+        return np.array([self.state], dtype=np.float32), reward, terminated, truncated, info
 
     def check_termination(self, state):
         x = state[0]

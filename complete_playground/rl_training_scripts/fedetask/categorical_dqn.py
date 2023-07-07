@@ -47,6 +47,7 @@ def select_argmax_action(z, atoms):
 
 
 class CategoricalDQN:
+
     def __init__(self, z_net, n_atoms, v_min, v_max, df=0.99, buffer_len=1e6, batch_size=32,
                  lr=0.5e-3, update_mode='hard', update_every=5, tau=0.05, epsilon=0.1,
                  start_train_at=4000, results_dir=None):
@@ -82,7 +83,7 @@ class CategoricalDQN:
                 action = torch.LongTensor([[random.choice(tuple(env.action_space))]])      # changed
             else:
                 action = select_argmax_action(z, self.atoms)
-
+            # print(action)
             next_state, reward, terminated, truncated, info = env.step(squeeze_np(action))      # changed squeeze_np(action)
             done = terminated or truncated
             next_state = np_to_unsq_tensor(next_state) if not done else None        # changed
@@ -174,7 +175,7 @@ if __name__ == '__main__':
     parser.add_argument('--n-hidden-layers', type=int, required=False, default=2,
                         help='Number of hidden layers in the distributional network. '
                              'Defaults to 2.')
-    parser.add_argument('--support-range', type=list, required=False, default=[-500, 0],
+    parser.add_argument('--support-range', type=list, required=False, default=[0, 200],
                         help='Range of the support of rewards. Ideally, it should be [min, max], '
                              'where min and max are referred to the min/max cumulative discounted '
                              'reward obtainable in one episode. Defaults to [0, 200].')
@@ -185,7 +186,7 @@ if __name__ == '__main__':
                         help='How often to update the target network. Defaults to 5.')
     parser.add_argument('--epsilon', type=float, required=False, default=0.1,
                         help='Exploration noise. Defaults to 0.1.')
-    parser.add_argument('--n-steps', type=int, required=False, default=100000,
+    parser.add_argument('--n-steps', type=int, required=False, default=200000,
                         help='Number of training steps. Defaults to 2000.')
     parser.add_argument('--out-file', type=str, required=False, default='{run_name}',
                         help='If specified, stores the training plot into the given file. The '
@@ -195,8 +196,8 @@ if __name__ == '__main__':
 
     #############################################
     # Modified code section
-    # env = cartpole.CartPole()
-    env = acrobot.Acrobot()
+    env = cartpole.CartPole()
+    # env = acrobot.Acrobot()
     state_dim = env.observation_space.shape[0]
     act_dim = len(env.action_space)       # env.action_space.n
 

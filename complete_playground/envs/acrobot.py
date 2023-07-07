@@ -104,7 +104,7 @@ class Acrobot():
         self.max_vel_1 = 4 * pi     # values taken from gymnasium acrobot
         self.max_vel_2 = 9 * pi
         self.upper_bound = np.array(
-            [np.pi, np.pi, self.max_vel_1, self.max_vel_2], dtype=np.float32
+            [1.0, 1.0, 1.0, 1.0, self.max_vel_1, self.max_vel_2], dtype=np.float32
         )
         self.lower_bound = -self.upper_bound
 
@@ -129,7 +129,6 @@ class Acrobot():
         # metadata lists "render_fps" as 50. This is where the tau value of 0.02 comes from because 50 frames per second results in 1/50 which is 0.02 seconds per frame.
         self.tau = 0.02  # seconds between state updates, our delta_t
         self.kinematics_integrator = "rk4"  # we use rk4 for our integration
-
 
         ##################################################
         # DEFINE ACTION AND OBSERVATION SPACE
@@ -168,7 +167,7 @@ class Acrobot():
         self.episode_reward = 0
         self.episode_length = 0
 
-        return np.array(self.state, dtype=np.float32)
+        return np.array([self._get_ob()])
     
     
     def step(self, action):
@@ -209,7 +208,7 @@ class Acrobot():
         self.episode_length += 1
         info = {}
         if terminated or truncated:
-            info['final_observation'] = self.state
+            info['final_observation'] = self._get_ob()
             info['_final_observation'] = np.array(True, dtype=bool)
             info['final_info'] = {
                 'episode': {
@@ -228,7 +227,7 @@ class Acrobot():
             if truncated:
                 info['TimeLimit.truncated'] = True
 
-        return np.array(self.state, dtype=np.float32), reward, terminated, truncated, info
+        return np.array([self._get_ob()]), reward, terminated, truncated, info
 
 
     def _dsdt(self, s_augmented):
@@ -266,7 +265,13 @@ class Acrobot():
         ddtheta1 = -(d2 * ddtheta2 + phi1) / d1
         return dtheta1, dtheta2, ddtheta1, ddtheta2, 0.0
     
-
+    def _get_ob(self):
+        s = self.state
+        assert s is not None, "Call reset before using AcrobotEnv object."
+        return np.array(
+            [cos(s[0]), sin(s[0]), cos(s[1]), sin(s[1]), s[2], s[3]], dtype=np.float32
+        )
+    
     def dynamics_acrobot(self, current_state, action):
         m1 = self.link_mass_1
         m2 = self.link_mass_2

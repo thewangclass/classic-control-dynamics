@@ -117,6 +117,12 @@ class CartPole():
         self.observation_space = self.upper_bound # to use in network for first layer input
         self.state = None
 
+        ##################################################
+        # INITIALIZE EPISODIC REWARD AND LENGTH
+        ##################################################
+        self.episode_reward = 0
+        self.episode_length = 0
+
     def reset(self):
         """
         Reset initial state for next session.
@@ -130,10 +136,12 @@ class CartPole():
         self.state = np.random.uniform(low=low, high=high, size=(4,))
 
         ##################################################
-        # RESET STEPS
+        # RESET EPISODIC VALUES
         ##################################################   
         self.steps_beyond_terminated = None
         self.steps = 0
+        self.episode_reward = 0
+        self.episode_length = 0
 
         return np.array(self.state, dtype=np.float32)
 
@@ -167,30 +175,33 @@ class CartPole():
         self.steps += 1
         truncated = self.steps >= self.max_episode_steps
 
-        infos = {}
+        self.episode_reward += reward
+        self.episode_length += 1
+        info = {}
         if terminated or truncated:
-            infos['final_observation'] = self.state
-            infos['_final_observation'] = np.array(True, dtype=bool)
-            infos['final_info'] = {
+            # See gymnasium wrappers record_episode_statistics.py
+            info['final_observation'] = self.state
+            info['_final_observation'] = np.array(True, dtype=bool)
+            info['final_info'] = {
                 'episode': {
                     'r': np.array(
-                        np.array([self.steps]),
+                        np.array([self.episode_reward]),
                         dtype=np.float32
                     ),
                     'l': np.array(
-                        np.array([self.steps]),
+                        np.array([self.episode_length]),
                         dtype=np.int32
                     ),
-                    't': 'unassigned for now'
+                    't': 'unassigned for now: elapsed time since beginning of episode'
                 }
             }
-            infos['_final_info'] = np.array(True, dtype=bool)
+            info['_final_info'] = np.array(True, dtype=bool)
             
             if truncated:
-                infos['TimeLimit.truncated'] = True
+                info['TimeLimit.truncated'] = True
         
         # next_state, reward, terminated, truncated, info
-        return np.array(self.state, dtype=np.float32), reward, terminated, truncated, infos
+        return np.array(self.state, dtype=np.float32), reward, terminated, truncated, info
 
     def check_termination(self, state):
         x = state[0]

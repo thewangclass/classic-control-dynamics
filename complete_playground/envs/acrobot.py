@@ -5,7 +5,8 @@ Framework from: https://github.com/Farama-Foundation/Gymnasium/blob/main/gymnasi
 import sys
 sys.path.append("/home/thewangclass/projects/classic-control-dynamics/")
 import numpy as np
-from math import cos, pi, sin
+from numpy import cos, pi, sin
+# from math import cos, pi, sin
 from complete_playground.envs.utils import wrap, bound
 # from complete_playground.envs.utils import runge_kutta as rk4
 

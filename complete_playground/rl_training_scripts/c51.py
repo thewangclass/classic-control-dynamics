@@ -103,14 +103,13 @@ class QNetwork(nn.Module):
         )
 
     def get_action(self, x, action=None):
-        # x = x.unsqueeze(0)              # cleanrl passes in tensor of [1, obs_shape], moved unsqueeze to exploit choosing
         logits = self.network(x)
         # probability mass function for each action
         pmfs = torch.softmax(logits.view(len(x), self.n, self.n_atoms), dim=2)
         q_values = (pmfs * self.atoms).sum(2)
         if action is None:
             action = torch.argmax(q_values, 1)
-        return action, pmfs[torch.arange(len(x)).long(), action]        # tensor used as indices must be long/byte/bool tensor
+        return action, pmfs[torch.arange(len(x)), action]        # tensor used as indices must be long/byte/bool tensor
 
 
 def linear_schedule(start_e: float, end_e: float, duration: int, t: int):

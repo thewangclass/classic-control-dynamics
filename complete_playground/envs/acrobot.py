@@ -167,7 +167,7 @@ class Acrobot():
         self.episode_reward = 0
         self.episode_length = 0
 
-        return self._get_ob()
+        return np.array([self._get_ob()])
     
     
     def step(self, action):

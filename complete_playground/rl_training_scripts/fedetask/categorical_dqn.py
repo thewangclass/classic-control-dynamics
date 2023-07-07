@@ -196,8 +196,8 @@ if __name__ == '__main__':
 
     #############################################
     # Modified code section
-    env = cartpole.CartPole()
-    # env = acrobot.Acrobot()
+    # env = cartpole.CartPole()
+    env = acrobot.Acrobot()
     state_dim = env.observation_space.shape[0]
     act_dim = len(env.action_space)       # env.action_space.n
 

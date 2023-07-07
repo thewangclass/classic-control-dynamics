@@ -8,6 +8,13 @@ python3 complete_playground/rl_training_scripts/c51.py --save-model True --total
 '''
 
 ## Currently Working On
+Infos, rewards
+Look at Wrappers -> RecordEpisodeStatistics
+https://github.com/Farama-Foundation/Gymnasium/blob/9bc0bf308dcb5b2baead896e91fa6b3170b2405d/gymnasium/wrappers/record_episode_statistics.py
+
+This may have something to do with why acrobot doesn't 'learn' - cartpole terminates more than truncates early on, especially when compared to acrobot. 
+Maybe I should not be setting infos['final_observation'] as the last observation? Maybe it should be what reset returns? I could call reset here?
+
 There are two types of ways for cartpole to end. 
 One way is through termination. This is when the pole falls according to the experiment parameters.
 The other is through truncation. This is when the experiment exceeds max timesteps allowed or something not defined by the problem. 
@@ -36,3 +43,9 @@ Where should we reset? At the end of the episode, we should call reset.
 https://github.com/Farama-Foundation/Gymnasium/blob/9bc0bf308dcb5b2baead896e91fa6b3170b2405d/gymnasium/vector/vector_env.py
 https://github.com/Farama-Foundation/Gymnasium/blob/9bc0bf308dcb5b2baead896e91fa6b3170b2405d/gymnasium/wrappers/autoreset.py
 https://colab.research.google.com/github/araffin/rl-tutorial-jnrr19/blob/sb3/5_custom_gym_env.ipynb#scrollTo=rYzDXA9vJfz1
+
+Normalizing observations + rewards
+sb3 ReplayBuffers normalizes the observations and rewards when sampling is done.
+This is inherited from parent buffer class, which calls the env.normalize_obs (or env.normalize_reward).
+This is from sb3 vec_env -> vec_normalize.py file. 
+Maybe acrobot requires this?

@@ -44,13 +44,15 @@ def parse_args():
     # --hf-entity
 
 
-    parser.add_argument("--env-id", type=str, default="cartpole",
+     # Algorithm specific arguments
+    parser.add_argument("--env-id", type=str, default="Acrobot-v1",
         help="the id of the environment")
-    parser.add_argument("--total-timesteps", type=int, default=1000000,
+    parser.add_argument("--total-timesteps", type=int, default=500000,
         help="total timesteps of the experiments")
     parser.add_argument("--learning-rate", type=float, default=2.5e-4,
         help="the learning rate of the optimizer")
-    # --num-envs
+    parser.add_argument("--num-envs", type=int, default=1,
+        help="the number of parallel game environments")
     parser.add_argument("--n-atoms", type=int, default=101,
         help="the number of atoms")
     parser.add_argument("--v-min", type=float, default=-100,
@@ -84,7 +86,7 @@ def parse_args():
 Later separate this into agent (learner) and network?
 """
 class QNetwork(nn.Module):
-    def __init__(self, env, n_atoms=101, v_min=-100, v_max=100, df=0.99, buffer_size=1e6, batch_size=1, lr=2.5e-4, network_update=500,training_freq=10, start_eps=1, end_eps=0.05, start_train_at=10000):
+    def __init__(self, env, n_atoms=101, v_min=-100, v_max=100):
         super(QNetwork, self).__init__()
         self.env = env
         self.n_atoms = n_atoms
@@ -170,7 +172,7 @@ if __name__ == "__main__":
     start_time = time.time()
 
     # Begin trial!
-    obs, _ = env.reset()
+    obs = env.reset()
     for global_step in range(args.total_timesteps):
 
         # Choose next action according to Explore vs Exploit
@@ -179,7 +181,7 @@ if __name__ == "__main__":
         if random.random() < epsilon:   # choose random action
             actions = np.array([random.choice(tuple(env.action_space))])
         else:                           # choose action with highest future rewards
-            actions, pmf = q_network.get_action(torch.Tensor(obs).unsqueeze(dim=0).to(device))      # unsqueeze because only one env?
+            actions, pmf = q_network.get_action(torch.Tensor(obs).to(device))      # unsqueeze because only one env?
             actions = actions.cpu().numpy()
 
         # Execute a step in the game
@@ -189,7 +191,7 @@ if __name__ == "__main__":
         if "final_info" in infos:
             print(f"global_step={global_step}, episodic_return={infos['final_info']['episode']['r']}")
             writer.add_scalar("charts/episodic_return", infos['final_info']['episode']['r'], global_step)
-            writer.add_scalar("charts/episodic_length", infos['final_info']['episode']['r'], global_step)
+            writer.add_scalar("charts/episodic_length", infos['final_info']['episode']['l'], global_step)
             writer.add_scalar("charts/epsilon", epsilon, global_step)
 
         # Handle final observation due to truncation
@@ -209,7 +211,7 @@ if __name__ == "__main__":
                 data = rb.sample(args.batch_size)
                 with torch.no_grad():
                     _, next_pmfs = target_network.get_action(data.next_observations)        # _ is batch size
-                    next_atoms = data.rewards + args.gamma * target_network.atoms * (1 - data.dones)
+                    next_atoms = data.rewards + args.gamma * target_network.atoms * (1 - data.dones) # is this https://gymnasium.farama.org/tutorials/gymnasium_basics/handling_time_limits/
                     # projection to an atom
                     delta_z = target_network.atoms[1] - target_network.atoms[0]
                     tz = next_atoms.clamp(args.v_min, args.v_max)
@@ -233,7 +235,7 @@ if __name__ == "__main__":
                     writer.add_scalar("losses/loss", loss.item(), global_step)
                     old_val = (old_pmfs * q_network.atoms).sum(1)
                     writer.add_scalar("losses/q_values", old_val.mean().item(), global_step)
-                    # print("SPS:", int(global_step / (time.time() - start_time)))
+                    print("SPS:", int(global_step / (time.time() - start_time)))
                     writer.add_scalar("charts/SPS", int(global_step / (time.time() - start_time)), global_step)
 
                 # optimize the model

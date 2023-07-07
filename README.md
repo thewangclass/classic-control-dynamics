@@ -29,3 +29,10 @@ Example values:
 
 ## Ongoing Issues
 ModuleNotFoundError. Look in c51.py and you will see the current workaround of appending to sys.path. Alternatives to add this on the Python path is to do it at the command line or export to the shell configuration. See (stackoverflow)[https://stackoverflow.com/questions/5875810/importerror-when-trying-to-import-a-custom-module-in-python].
+
+Reset.
+VecEnv resets automatically when a done signal is encountered. 
+Where should we reset? At the end of the episode, we should call reset. 
+https://github.com/Farama-Foundation/Gymnasium/blob/9bc0bf308dcb5b2baead896e91fa6b3170b2405d/gymnasium/vector/vector_env.py
+https://github.com/Farama-Foundation/Gymnasium/blob/9bc0bf308dcb5b2baead896e91fa6b3170b2405d/gymnasium/wrappers/autoreset.py
+https://colab.research.google.com/github/araffin/rl-tutorial-jnrr19/blob/sb3/5_custom_gym_env.ipynb#scrollTo=rYzDXA9vJfz1

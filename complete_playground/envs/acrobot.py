@@ -143,6 +143,12 @@ class Acrobot():
         self.observation_space = self.upper_bound
         self.state = None
 
+        ##################################################
+        # INITIALIZE EPISODIC REWARD AND LENGTH
+        ##################################################
+        self.episode_reward = 0
+        self.episode_length = 0
+
     def reset(self):
         """
         Reset initial state for next episode.
@@ -156,9 +162,11 @@ class Acrobot():
         self.state = np.random.uniform(low=low, high=high, size=(4,)).astype(np.float32)
 
         ##################################################
-        # RESET STEPS
-        ##################################################       
+        # RESET EPISODIC VALUES
+        ##################################################   
         self.steps = 0
+        self.episode_reward = 0
+        self.episode_length = 0
 
         return np.array(self.state, dtype=np.float32)
     
@@ -180,8 +188,8 @@ class Acrobot():
         s = self.state
         s_augmented = np.append(s, torque)
         ns = rk4(self._dsdt, s_augmented, [0, self.tau])
-
         # ns = rk4(self.dynamics_acrobot, self.state, torque, self.tau)
+
         ns[0] = wrap(ns[0], -pi, pi)
         ns[1] = wrap(ns[1], -pi, pi)
         ns[2] = bound(ns[2], -self.max_vel_1, self.max_vel_1)
@@ -197,31 +205,30 @@ class Acrobot():
         truncated = self.steps >= self.max_episode_steps
 
         # generate infos for last timestep of episode
-        infos = {}
+        self.episode_reward += reward
+        self.episode_length += 1
+        info = {}
         if terminated or truncated:
-            infos['final_observation'] = self.state
-            infos['_final_observation'] = np.array(True, dtype=bool)
-            infos['final_info'] = {
+            info['final_observation'] = self.state
+            info['_final_observation'] = np.array(True, dtype=bool)
+            info['final_info'] = {
                 'episode': {
                     'r': np.array(
-                        np.array([0 - self.steps]),
+                        np.array([self.episode_reward]),
                         dtype=np.float32
                     ),
                     'l': np.array(
-                        np.array([self.steps]),
+                        np.array([self.episode_length]),
                         dtype=np.int32
                     ),
-                    't': 'unassigned for now'
+                    't': 'unassigned for now: elapsed time since beginning of episode'
                 }
             }
-            infos['_final_info'] = np.array(True, dtype=bool)
-            
-            if terminated:
-                print('stop!')
+            info['_final_info'] = np.array(True, dtype=bool)
             if truncated:
-                infos['TimeLimit.truncated'] = True
+                info['TimeLimit.truncated'] = True
 
-        return np.array(self.state, dtype=np.float32), reward, terminated, truncated, infos
+        return np.array(self.state, dtype=np.float32), reward, terminated, truncated, info
 
 
     def _dsdt(self, s_augmented):

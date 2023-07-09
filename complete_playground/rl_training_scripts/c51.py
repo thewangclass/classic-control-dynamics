@@ -248,7 +248,7 @@ if __name__ == "__main__":
 
         # TODO: Check if terminated or truncated, if so then record stats, reset and start over
         if terminated or truncated:
-            env.reset()
+            obs = env.reset()
 
 
     if args.save_model:

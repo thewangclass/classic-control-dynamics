@@ -150,9 +150,9 @@ class CartPole():
 
 
     def step(self, action):
-        # assert self.action_space.contains(
-        #     action
-        # ), f"{action!r} ({type(action)}) invalid"
+        assert self.action_space.contains(
+            action[0]
+        ), f"{action!r} ({type(action)}) invalid"
         assert self.state is not None, "Call reset before step"
 
         # update state

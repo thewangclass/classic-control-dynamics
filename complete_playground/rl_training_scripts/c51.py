@@ -19,7 +19,7 @@ import torch.optim as optim
 from torch.utils.tensorboard import SummaryWriter
 
 from complete_playground.utils.buffer import ReplayBuffer
-from complete_playground.envs import cartpole, acrobot, mountain_car
+from complete_playground.envs import cartpole, acrobot, mountain_car, pendulum
 
 
 def parse_args():
@@ -145,7 +145,9 @@ if __name__ == "__main__":
 
     # setup environment
     # env = cartpole.CartPole()
-    env = mountain_car.MountainCar()
+    # env = acrobot.Acrobot()
+    # env = mountain_car.MountainCar()
+    env = pendulum.Pendulum()
     # env = args.env_id   # cartpole/acrobot for now
 
     # Initialize Network

@@ -21,8 +21,11 @@ class ReplayBuffer():
         self.states = np.zeros(shape=(self.buffer_size, *observation_space.shape), dtype=observation_space.dtype)
         self.next_states = np.zeros((self.buffer_size, *observation_space.shape), dtype=observation_space.dtype)
 
+        # Look at sb3/common/preprocessing.py -> get_action_dim
         if(action_type == "Discrete"):
             action_dim = 1
+        elif(action_type == "Box"):
+            action_dim = int(np.prod(action_space.shape))
 
         self.actions = np.zeros((self.buffer_size, action_dim), dtype=np.int64)
         self.rewards = np.zeros(self.buffer_size, dtype=np.float32)

@@ -14,7 +14,7 @@ class ReplayBuffer():
             self, 
             buffer_size: int,
             observation_space,
-            action_type,
+            action_space,
             device: Union[th.device, str] = "auto"
         ):
         self.buffer_size = buffer_size

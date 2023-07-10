@@ -144,10 +144,10 @@ if __name__ == "__main__":
     print(device)
 
     # setup environment
-    # env = cartpole.CartPole()
+    env = cartpole.CartPole()
     # env = acrobot.Acrobot()
     # env = mountain_car.MountainCar()
-    env = pendulum.Pendulum()
+    # env = pendulum.Pendulum()
     # env = args.env_id   # cartpole/acrobot for now
 
     # Initialize Network
@@ -167,7 +167,7 @@ if __name__ == "__main__":
     rb = ReplayBuffer(
         args.buffer_size,
         env.observation_space,
-        env.action_type,
+        env.action_space,
         device
         )
     start_time = time.time()

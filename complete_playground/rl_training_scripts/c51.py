@@ -19,7 +19,7 @@ import torch.optim as optim
 from torch.utils.tensorboard import SummaryWriter
 
 from complete_playground.utils.buffer import ReplayBuffer
-from complete_playground.envs import cartpole, acrobot
+from complete_playground.envs import cartpole, acrobot, mountain_car
 
 
 def parse_args():

@@ -175,8 +175,11 @@ class CartPole():
         self.steps += 1
         truncated = self.steps >= self.max_episode_steps
 
+        # update episode reward and length
         self.episode_reward += reward
         self.episode_length += 1
+
+        # create info to return
         info = {}
         if terminated or truncated:
             # See gymnasium wrappers record_episode_statistics.py

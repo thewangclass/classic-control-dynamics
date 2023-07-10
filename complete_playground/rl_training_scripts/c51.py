@@ -180,7 +180,7 @@ if __name__ == "__main__":
         # epsilon will decrease over time
         epsilon = linear_schedule(args.start_e, args.end_e, args.exploration_fraction * args.total_timesteps, global_step)
         if random.random() < epsilon:   # choose random action
-            actions = np.array([random.choice(tuple(env.action_space))])
+            actions = np.array(env.action_space.sample())
         else:                           # choose action with highest future rewards
             actions, pmf = q_network.get_action(torch.Tensor(obs).to(device))      # unsqueeze because only one env?
             actions = actions.cpu().numpy()
@@ -248,7 +248,6 @@ if __name__ == "__main__":
             if global_step % args.target_network_frequency == 0:
                 target_network.load_state_dict(q_network.state_dict())
 
-        # TODO: Check if terminated or truncated, if so then record stats, reset and start over
         if terminated or truncated:
             obs = env.reset()
 

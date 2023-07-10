@@ -114,26 +114,26 @@ def preprocess_obs(
         # One hot encoding and convert to float to avoid errors
         return F.one_hot(obs.long(), num_classes=observation_space.n).float()
 
-    elif isinstance(observation_space, spaces.MultiDiscrete):
-        # Tensor concatenation of one hot encodings of each Categorical sub-space
-        return th.cat(
-            [
-                F.one_hot(obs_.long(), num_classes=int(observation_space.nvec[idx])).float()
-                for idx, obs_ in enumerate(th.split(obs.long(), 1, dim=1))
-            ],
-            dim=-1,
-        ).view(obs.shape[0], sum(observation_space.nvec))
+    # elif isinstance(observation_space, spaces.MultiDiscrete):
+    #     # Tensor concatenation of one hot encodings of each Categorical sub-space
+    #     return th.cat(
+    #         [
+    #             F.one_hot(obs_.long(), num_classes=int(observation_space.nvec[idx])).float()
+    #             for idx, obs_ in enumerate(th.split(obs.long(), 1, dim=1))
+    #         ],
+    #         dim=-1,
+    #     ).view(obs.shape[0], sum(observation_space.nvec))
 
-    elif isinstance(observation_space, spaces.MultiBinary):
-        return obs.float()
+    # elif isinstance(observation_space, spaces.MultiBinary):
+    #     return obs.float()
 
-    elif isinstance(observation_space, spaces.Dict):
-        # Do not modify by reference the original observation
-        assert isinstance(obs, Dict), f"Expected dict, got {type(obs)}"
-        preprocessed_obs = {}
-        for key, _obs in obs.items():
-            preprocessed_obs[key] = preprocess_obs(_obs, observation_space[key], normalize_images=normalize_images)
-        return preprocessed_obs
+    # elif isinstance(observation_space, spaces.Dict):
+    #     # Do not modify by reference the original observation
+    #     assert isinstance(obs, Dict), f"Expected dict, got {type(obs)}"
+    #     preprocessed_obs = {}
+    #     for key, _obs in obs.items():
+    #         preprocessed_obs[key] = preprocess_obs(_obs, observation_space[key], normalize_images=normalize_images)
+    #     return preprocessed_obs
 
     else:
         raise NotImplementedError(f"Preprocessing not implemented for {observation_space}")
@@ -153,14 +153,14 @@ def get_obs_shape(
     elif isinstance(observation_space, spaces.Discrete):
         # Observation is an int
         return (1,)
-    elif isinstance(observation_space, spaces.MultiDiscrete):
-        # Number of discrete features
-        return (int(len(observation_space.nvec)),)
-    elif isinstance(observation_space, spaces.MultiBinary):
-        # Number of binary features
-        return observation_space.shape
-    elif isinstance(observation_space, spaces.Dict):
-        return {key: get_obs_shape(subspace) for (key, subspace) in observation_space.spaces.items()}  # type: ignore[misc]
+    # elif isinstance(observation_space, spaces.MultiDiscrete):
+    #     # Number of discrete features
+    #     return (int(len(observation_space.nvec)),)
+    # elif isinstance(observation_space, spaces.MultiBinary):
+    #     # Number of binary features
+    #     return observation_space.shape
+    # elif isinstance(observation_space, spaces.Dict):
+    #     return {key: get_obs_shape(subspace) for (key, subspace) in observation_space.spaces.items()}  # type: ignore[misc]
 
     else:
         raise NotImplementedError(f"{observation_space} observation space is not supported")
@@ -178,11 +178,12 @@ def get_flattened_obs_dim(observation_space: spaces.Space) -> int:
     """
     # See issue https://github.com/openai/gym/issues/1915
     # it may be a problem for Dict/Tuple spaces too...
-    if isinstance(observation_space, spaces.MultiDiscrete):
-        return sum(observation_space.nvec)
-    else:
-        # Use Gym internal method
-        return spaces.utils.flatdim(observation_space)
+    # if isinstance(observation_space, spaces.MultiDiscrete):
+    #     return sum(observation_space.nvec)
+    # else:
+    #     # Use Gym internal method
+    #     return spaces.utils.flatdim(observation_space)
+    pass
 
 
 def get_action_dim(action_space: spaces.Space) -> int:
@@ -197,15 +198,15 @@ def get_action_dim(action_space: spaces.Space) -> int:
     elif isinstance(action_space, spaces.Discrete):
         # Action is an int
         return 1
-    elif isinstance(action_space, spaces.MultiDiscrete):
-        # Number of discrete actions
-        return int(len(action_space.nvec))
-    elif isinstance(action_space, spaces.MultiBinary):
-        # Number of binary actions
-        assert isinstance(
-            action_space.n, int
-        ), "Multi-dimensional MultiBinary action space is not supported. You can flatten it instead."
-        return int(action_space.n)
+    # elif isinstance(action_space, spaces.MultiDiscrete):
+    #     # Number of discrete actions
+    #     return int(len(action_space.nvec))
+    # elif isinstance(action_space, spaces.MultiBinary):
+    #     # Number of binary actions
+    #     assert isinstance(
+    #         action_space.n, int
+    #     ), "Multi-dimensional MultiBinary action space is not supported. You can flatten it instead."
+    #     return int(action_space.n)
     else:
         raise NotImplementedError(f"{action_space} action space is not supported")
 
@@ -217,10 +218,11 @@ def check_for_nested_spaces(obs_space: spaces.Space) -> None:
 
     :param obs_space: an observation space
     """
-    if isinstance(obs_space, (spaces.Dict, spaces.Tuple)):
-        sub_spaces = obs_space.spaces.values() if isinstance(obs_space, spaces.Dict) else obs_space.spaces
-        for sub_space in sub_spaces:
-            if isinstance(sub_space, (spaces.Dict, spaces.Tuple)):
-                raise NotImplementedError(
-                    "Nested observation spaces are not supported (Tuple/Dict space inside Tuple/Dict space)."
-                )
+    # if isinstance(obs_space, (spaces.Dict, spaces.Tuple)):
+    #     sub_spaces = obs_space.spaces.values() if isinstance(obs_space, spaces.Dict) else obs_space.spaces
+    #     for sub_space in sub_spaces:
+    #         if isinstance(sub_space, (spaces.Dict, spaces.Tuple)):
+    #             raise NotImplementedError(
+    #                 "Nested observation spaces are not supported (Tuple/Dict space inside Tuple/Dict space)."
+    #             )
+    pass

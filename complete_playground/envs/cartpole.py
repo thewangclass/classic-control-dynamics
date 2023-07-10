@@ -72,9 +72,9 @@ class CartPole():
         self.upper_bound = np.array(
             [
                 self.x_threshold * 2,
-                np.inf,    # np.finfo(np.float32).max,
+                np.finfo(np.float32).max,    # np.inf
                 self.theta_threshold_radians * 2,
-                np.inf,     # np.finfo(np.float32).max,
+                np.finfo(np.float32).max,     # np.finfo(np.float32).max,
             ],
             dtype=np.float32,
         )

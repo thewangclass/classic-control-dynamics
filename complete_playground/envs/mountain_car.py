@@ -9,6 +9,7 @@ import math
 from typing import Optional
 
 import numpy as np
+from complete_playground import spaces
 
 class MountainCar():
     """
@@ -120,9 +121,11 @@ class MountainCar():
         ##################################################
         # DEFINE ACTION AND OBSERVATION SPACE
         ##################################################
-        self.action_space = {0, 1, 2}
-        self.action_type = "Discrete"
-        self.observation_space = self.upper_bound
+        # self.action_space = {0, 1, 2}
+        # self.action_type = "Discrete"
+        # self.observation_space = self.upper_bound
+        self.action_space = spaces.Discrete(3)
+        self.observation_space = spaces.Box(self.lower_bound, self.upper_bound, dtype=np.float32)
         self.state = None
 
         ##################################################

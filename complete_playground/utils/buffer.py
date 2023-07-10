@@ -4,6 +4,7 @@ from typing import Union, List, Dict, Any
 import torch as th
 from complete_playground.utils.common import get_device
 from complete_playground.utils.type_aliases import ReplayBufferSamples
+from complete_playground.utils.preprocessing import get_action_dim, get_obs_shape
 
 
 class ReplayBuffer():
@@ -18,23 +19,24 @@ class ReplayBuffer():
             device: Union[th.device, str] = "auto"
         ):
         self.buffer_size = buffer_size
-        self.states = np.zeros(shape=(self.buffer_size, *observation_space.shape), dtype=observation_space.dtype)
-        self.next_states = np.zeros((self.buffer_size, *observation_space.shape), dtype=observation_space.dtype)
+        self.observation_space = observation_space
 
-        # Look at sb3/common/preprocessing.py -> get_action_dim
-        if(action_type == "Discrete"):
-            action_dim = 1
-        elif(action_type == "Box"):
-            action_dim = int(np.prod(action_space.shape))
-
-        self.actions = np.zeros((self.buffer_size, action_dim), dtype=np.int64)
-        self.rewards = np.zeros(self.buffer_size, dtype=np.float32)
-        self.terminations = np.zeros(self.buffer_size, dtype=np.float32)
-        self.timeouts = np.zeros(self.buffer_size, dtype=np.float32)        # infos
-
+        # Look at sb3/common/preprocessing.py -> get_action_dim, which is called from buffers.py
+        self.obs_shape = get_obs_shape(observation_space)
+        self.action_dim = get_action_dim(action_space)
+        
         self.pos = 0
         self.full = False
         self.device = get_device(device)
+
+        self.states = np.zeros(shape=(self.buffer_size, *self.obs_shape), dtype=observation_space.dtype)
+        self.next_states = np.zeros((self.buffer_size, *self.obs_shape), dtype=observation_space.dtype)
+        self.actions = np.zeros((self.buffer_size, self.action_dim), dtype=np.int64)
+        self.rewards = np.zeros(self.buffer_size, dtype=np.float32)
+        self.terminations = np.zeros(self.buffer_size, dtype=np.float32)
+        self.truncations = np.zeros(self.buffer_size, dtype=np.float32)        # infos
+
+
 
     def add(
             self, 
@@ -52,7 +54,7 @@ class ReplayBuffer():
         self.actions[self.pos] = np.array(action).copy()
         self.rewards[self.pos] = np.array(reward).copy()
         self.terminations[self.pos] = np.array(terminated).copy()
-        self.timeouts[self.pos] = np.array(infos.get("TimeLimit.truncated", False)).copy()
+        self.truncations[self.pos] = np.array(infos.get("TimeLimit.truncated", False)).copy()
 
         self.pos += 1
         if self.pos == self.buffer_size:
@@ -83,7 +85,7 @@ class ReplayBuffer():
             self.states[batch_inds, :],                 # [batch_size, state_shape]
             self.actions[batch_inds, :],
             self.next_states[batch_inds, :],
-            (self.terminations[batch_inds] * (1 - self.timeouts[batch_inds])).reshape(-1, 1),      # necessary to get tensor into shape [batch, 1]
+            (self.terminations[batch_inds] * (1 - self.truncations[batch_inds])).reshape(-1, 1),      # necessary to get tensor into shape [batch, 1]
             self.rewards[batch_inds].reshape(-1, 1)     # necessary to get tensor into shape [batch, 1]
         )
         return ReplayBufferSamples(*tuple(map(self.to_torch, data)))

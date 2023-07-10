@@ -35,6 +35,21 @@ Example values:
 't': np.ndarray, array([4.043945], dtype=float32): ???
 
 ## Ongoing Issues
+Acrobot does not work.
+Possible reasons: 
+- Acrobot itself is coded wrong 
+    - unlikely, have my own implementation and pretty much copy+pasted the acrobot from gymnasium
+- c51 algorithm has a defect
+    - reset() returns an observation that should be assigned to state (obs)
+- Buffer is not correctly made
+    - check how dones is calculated? 
+- Environments with high truncation to termination overall just don't work?
+    - Cartpole is high termination to truncation, it works
+    - Acrobot is high truncation to termination, does not work
+    - Create another env with high truncation to termination (mountain-car?) to check
+        - If this fails, then not just an acrobot problem but something to do with high truncation to termination
+    - This relates to the other bullet points, namely reset() returning an observation that should be assigned to state, infos['final_observation'], and buffer
+
 ModuleNotFoundError. Look in c51.py and you will see the current workaround of appending to sys.path. Alternatives to add this on the Python path is to do it at the command line or export to the shell configuration. See (stackoverflow)[https://stackoverflow.com/questions/5875810/importerror-when-trying-to-import-a-custom-module-in-python].
 
 Reset.

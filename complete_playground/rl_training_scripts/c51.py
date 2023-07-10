@@ -145,7 +145,7 @@ if __name__ == "__main__":
 
     # setup environment
     # env = cartpole.CartPole()
-    env = acrobot.Acrobot()
+    env = mountain_car.MountainCar()
     # env = args.env_id   # cartpole/acrobot for now
 
     # Initialize Network

@@ -135,8 +135,8 @@ class MountainCar():
         ##################################################
         # INITIALIZE NEW RANDOM STARTING STATE
         ##################################################
-        low = 0
-        high = 0
+        low = -0.6
+        high = -0.4
         self.state = np.random.uniform(low=low, high=high, size=(2,)).astype(np.float32)
 
 
@@ -161,8 +161,8 @@ class MountainCar():
         position += velocity
         position = np.clip(position, self.min_position, self.max_position)
         if position == self.min_position and velocity < 0:
-            velocity = 0
-        self.state = (position, velocity)
+            velocity = np.array([0])
+        self.state = np.array([position, velocity]).flatten()   # different
 
         # check if episode ends due to termination and update reward accordingly
         terminated = bool(

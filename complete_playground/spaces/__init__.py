@@ -13,6 +13,7 @@ All spaces inherit from the :class:`Space` superclass.
 
 from complete_playground.spaces.box import Box
 from complete_playground.spaces.discrete import Discrete
+from complete_playground.spaces.space import Space
 
 __all__ = [
     # base space

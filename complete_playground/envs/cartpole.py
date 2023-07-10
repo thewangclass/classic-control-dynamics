@@ -12,6 +12,7 @@ import numpy as np
 
 from complete_playground.envs.utils import get_sign
 from complete_playground.envs.utils import runge_kutta as rk4
+from complete_playground import spaces
 
 class CartPole():
     """
@@ -112,9 +113,11 @@ class CartPole():
         # Possible actions the cartpole can take
         # 0: push cart to left
         # 1: push cart to right
-        self.action_space = {0, 1}
-        self.action_type = "Discrete"  # used in buffer to determine shape of memory
-        self.observation_space = self.upper_bound # to use in network for first layer input
+        # self.action_space = {0, 1}
+        # self.action_type = "Discrete"  # used in buffer to determine shape of memory
+        # self.observation_space = self.upper_bound # to use in network for first layer input
+        self.action_space = spaces.Discrete(2)
+        self.observation_space = spaces.Box(-self.lower_bound, self.upper_bound, dtype=np.float32)
         self.state = None
 
         ##################################################
@@ -147,9 +150,9 @@ class CartPole():
 
 
     def step(self, action):
-        # Make sure valid action and state are present
-        # print(action)
-        # assert action in self.action_space, f"invalid action chosen: {action}"            # TODO: cannot check if ndarray is in here
+        assert self.action_space.contains(
+            action
+        ), f"{action!r} ({type(action)}) invalid"
         assert self.state is not None, "Call reset before step"
 
         # update state

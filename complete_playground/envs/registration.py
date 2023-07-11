@@ -519,7 +519,8 @@ def make(
     # No wrappers
     ####################
 
-
+    if max_episode_steps is not None:
+        env.max_episode_steps = max_episode_steps
     return env
 
 def spec(env_id: str) -> EnvSpec:

@@ -7,6 +7,7 @@ sys.path.append("/home/thewangclass/projects/classic-control-dynamics/")
 import numpy as np
 from math import cos, pi, sin
 from complete_playground.envs.utils import wrap, bound
+from complete_playground import Env, spaces
 # from complete_playground.envs.utils import runge_kutta as rk4
 
 __copyright__ = "Copyright 2013, RLPy http://acl.mit.edu/RLPy"
@@ -24,7 +25,7 @@ __author__ = "Christoph Dann <cdann@cdann.de>"
 # https://github.com/rlpy/rlpy/blob/master/rlpy/Domains/Acrobot.py
 
 
-class AcrobotEnv():
+class AcrobotEnv(Env):
     """
     ## Description
 
@@ -366,7 +367,7 @@ def rk4(derivs, y0, t):
     return yout[-1][:4]
 
 if __name__ == '__main__':
-    abot = Acrobot()
+    abot = AcrobotEnv()
     abot.reset()
     print("testing")
     print("Current state: {}\n".format(abot.state))

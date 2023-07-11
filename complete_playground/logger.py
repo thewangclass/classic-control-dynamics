@@ -16,7 +16,7 @@ min_level = 30
 
 
 # Ensure DeprecationWarning to be displayed (#2685, #3059)
-warnings.filterwarnings("once", "", DeprecationWarning, module=r"^gymnasium\.")
+warnings.filterwarnings("once", "", DeprecationWarning, module=r"^complete_playground\.")
 
 
 def set_level(level: int):

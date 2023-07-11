@@ -27,3 +27,4 @@ __all__ = [
     "error",
     "logger",
 ]
+__version__ = "0.00.0"

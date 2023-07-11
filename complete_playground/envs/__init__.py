@@ -27,6 +27,25 @@ register(
     reward_threshold=475.0,
 )
 
+register(
+    id="MountainCar-v0",
+    entry_point="complete_playground.envs.classic_control.MountainCar:MountainCarEnv",
+    max_episode_steps=200,
+    reward_threshold=-110.0,
+)
+
+register(
+    id="Pendulum-v1",
+    entry_point="complete_playground.envs.classic_control.pendulum:PendulumEnv",
+    max_episode_steps=200,
+)
+
+register(
+    id="Acrobot-v1",
+    entry_point="complete_playground.envs.classic_control.acrobot:AcrobotEnv",
+    reward_threshold=-100.0,
+    max_episode_steps=500,
+)
 
 
 # Hook to load plugins from entry points

@@ -5,6 +5,7 @@ from os import path
 from typing import Optional
 
 import numpy as np
+from complete_playground import spaces
 
 class Pendulum():
     """
@@ -94,8 +95,6 @@ class Pendulum():
         ##################################################
         self.max_episode_steps = 200    # going over this causes truncation
         self.steps = 0
-        self.steps_beyond_terminated = None
-
 
         ##################################################
         # SYSTEM DIMENSIONS
@@ -111,9 +110,6 @@ class Pendulum():
         # CONSTRAINTS
         ##################################################
         self.upper_bound = np.array([1.0, 1.0, self.max_speed], dtype=np.float32)
-        # This will throw a warning in tests/envs/test_envs in utils/env_checker.py as the space is not symmetric
-        #   or normalised as max_torque == 2 by default. Ignoring the issue here as the default settings are too old
-        #   to update to follow the gymnasium api
         self.lower_bound = -self.upper_bound
 
 
@@ -123,9 +119,13 @@ class Pendulum():
         # Possible actions the cartpole can take
         # 0: push cart to left
         # 1: push cart to right
-        self.action_space = np.array([-self.max_torque, self.max_torque], dtype=np.float32)
-        self.action_type = "Box"  # used in buffer to determine shape of memory
-        self.observation_space = self.upper_bound # to use in network for first layer input
+        # self.action_space = np.array([-self.max_torque, self.max_torque], dtype=np.float32)
+        # self.action_type = "Box"  # used in buffer to determine shape of memory
+        # self.observation_space = self.upper_bound # to use in network for first layer input
+        self.action_space = spaces.Box(
+            low=-self.max_torque, high=self.max_torque, shape=(1,), dtype=np.float32
+        )
+        self.observation_space = spaces.Box(low=self.lower_bound, high=self.upper_bound, dtype=np.float32)
         self.state = None
 
         ##################################################

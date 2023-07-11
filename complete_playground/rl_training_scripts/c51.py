@@ -18,6 +18,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.tensorboard import SummaryWriter
 
+import complete_playground as play
 from complete_playground.utils.buffer import ReplayBuffer
 from complete_playground.envs import cartpole, acrobot, mountain_car, pendulum
 
@@ -146,9 +147,10 @@ if __name__ == "__main__":
     # setup environment
     # env = cartpole.CartPole()
     # env = acrobot.Acrobot()
-    env = mountain_car.MountainCar()
-    # env = pendulum.Pendulum()
+    # env = mountain_car.MountainCar()
+    env = pendulum.Pendulum()
     # env = args.env_id   # cartpole/acrobot for now
+    assert isinstance(env.action_space, play.spaces.Discrete), "only discrete action space is supported"
 
     # Initialize Network
     # Create Model and Choose Optimizer
@@ -163,7 +165,7 @@ if __name__ == "__main__":
     """
     
 
-    # Setup replay buffer
+    # Setup replay buffer\
     rb = ReplayBuffer(
         args.buffer_size,
         env.observation_space,

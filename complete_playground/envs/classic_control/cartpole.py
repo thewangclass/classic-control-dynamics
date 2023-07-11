@@ -11,9 +11,10 @@ import numpy as np
 
 from complete_playground.envs.utils import get_sign
 from complete_playground.envs.utils import runge_kutta as rk4
-from complete_playground import spaces
+from complete_playground import Env, spaces
 
-class CartPoleEnv():
+
+class CartPoleEnv(Env):
     """
     ## Description
 
@@ -282,24 +283,3 @@ class CartPoleEnv():
 
         self.x_acc = x_acc
         return x_acc
-        
-             
-
-if __name__ == '__main__':
-    cart = CartPole()
-    cart.reset()
-    print("testing")
-    print("Current state: {}\n".format(cart.state))
-    cart.step(1)
-    print("State after applying  {0}N force for {1}seconds: {2}\n".format(cart.force_mag, cart.tau, cart.state))
-    cart.step(1)
-    print("State after applying  {0}N force for {1}seconds: {2}\n".format(cart.force_mag, cart.tau, cart.state))
-    cart.step(1)
-    print("State after applying  {0}N force for {1}seconds: {2}\n".format(cart.force_mag, cart.tau, cart.state))
-
-    cart.step(0)
-    print("State after applying  -{0}N force for {1}seconds: {2}\n".format(cart.force_mag, cart.tau, cart.state))
-    cart.step(0)
-    print("State after applying  -{0}N force for {1}seconds: {2}\n".format(cart.force_mag, cart.tau, cart.state))
-    cart.step(0)
-    print("State after applying  -{0}N force for {1}seconds: {2}\n".format(cart.force_mag, cart.tau, cart.state))

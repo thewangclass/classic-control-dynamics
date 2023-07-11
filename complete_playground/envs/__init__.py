@@ -29,7 +29,7 @@ register(
 
 register(
     id="MountainCar-v0",
-    entry_point="complete_playground.envs.classic_control.MountainCar:MountainCarEnv",
+    entry_point="complete_playground.envs.classic_control.mountain_car:MountainCarEnv",
     max_episode_steps=200,
     reward_threshold=-110.0,
 )

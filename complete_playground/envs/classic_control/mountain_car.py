@@ -9,9 +9,9 @@ import math
 from typing import Optional
 
 import numpy as np
-from complete_playground import spaces
+from complete_playground import Env, spaces
 
-class MountainCarEnv():
+class MountainCarEnv(Env):
     """
     ## Description
 
@@ -206,22 +206,3 @@ class MountainCarEnv():
                 info['TimeLimit.truncated'] = True
 
         return np.array([self.state], dtype=np.float32), reward, terminated, truncated, info
-
-if __name__ == '__main__':
-    env = MountainCar()
-    env.reset()
-    print("testing")
-    print("Current state: {}\n".format(env.state))
-
-    env.step(2)
-    print("State after applying right action: {0}".format(env.state))
-    env.step(2)
-    print("State after applying right action: {0}".format(env.state))
-    # env.step(1)
-    # print("State after applying no action: {0}".format(env.state))
-    # env.step(1)
-    # print("State after applying no action: {0}".format(env.state))
-    # env.step(0)
-    # print("State after applying left action: {0}".format(env.state))
-    # env.step(0)
-    # print("State after applying left action: {0}".format(env.state))

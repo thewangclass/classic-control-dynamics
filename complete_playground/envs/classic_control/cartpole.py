@@ -57,9 +57,7 @@ class CartPoleEnv(Env):
         ##################################################
         # EPISODE ENDING
         ##################################################
-        self.max_episode_steps = 500    # going over this causes truncation
         self.steps = 0
-        self.steps_beyond_terminated = None
 
         # Angle at which to fail the episode: pole below this angle means failure
         self.theta_threshold_radians = 12 * 2 * math.pi / 360

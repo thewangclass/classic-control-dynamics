@@ -20,7 +20,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 import complete_playground as play
 from complete_playground.utils.buffer import ReplayBuffer
-from complete_playground.envs import cartpole, acrobot, mountain_car, pendulum
+from complete_playground.envs.classic_control import cartpole, acrobot, mountain_car, pendulum
 
 
 def parse_args():
@@ -46,7 +46,7 @@ def parse_args():
 
 
      # Algorithm specific arguments
-    parser.add_argument("--env-id", type=str, default="Acrobot-v1",
+    parser.add_argument("--env-id", type=str, default="CartPole-v1",
         help="the id of the environment")
     parser.add_argument("--total-timesteps", type=int, default=500000,
         help="total timesteps of the experiments")
@@ -145,11 +145,7 @@ if __name__ == "__main__":
     print(device)
 
     # setup environment
-    # env = cartpole.CartPole()
-    # env = acrobot.Acrobot()
-    # env = mountain_car.MountainCar()
-    env = pendulum.Pendulum()
-    # env = args.env_id   # cartpole/acrobot for now
+    env = play.make(args.env_id)
     assert isinstance(env.action_space, play.spaces.Discrete), "only discrete action space is supported"
 
     # Initialize Network

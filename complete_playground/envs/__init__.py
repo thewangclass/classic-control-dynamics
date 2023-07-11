@@ -26,3 +26,8 @@ register(
     max_episode_steps=500,
     reward_threshold=475.0,
 )
+
+
+
+# Hook to load plugins from entry points
+load_plugin_envs()

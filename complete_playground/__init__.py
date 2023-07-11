@@ -4,9 +4,13 @@ from complete_playground.core import (
     Env
 )
 from complete_playground.spaces.space import Space
-# from complete_playground.envs.registration import (
-    
-# )
+from complete_playground.envs.registration import (
+    make,
+    spec,
+    register,
+    registry,
+    pprint_registry,    
+)
 from complete_playground import envs, spaces, rl_training_scripts, utils, error, logger
 
 __all__ = [

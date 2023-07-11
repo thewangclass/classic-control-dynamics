@@ -11,6 +11,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Any, Callable, Iterable, Sequence, Protocol
 
+import complete_playground as play
 from complete_playground import Env, error, logger
 
 ENV_ID_RE = re.compile(
@@ -519,8 +520,8 @@ def make(
     # No wrappers
     ####################
 
-    if max_episode_steps is not None:
-        env.max_episode_steps = max_episode_steps
+    if env_spec.max_episode_steps is not None:
+        env.max_episode_steps = env_spec.max_episode_steps
     return env
 
 def spec(env_id: str) -> EnvSpec:

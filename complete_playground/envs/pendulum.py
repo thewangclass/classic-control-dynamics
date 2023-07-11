@@ -116,9 +116,6 @@ class Pendulum():
         ##################################################
         # DEFINE ACTION AND OBSERVATION SPACE
         ##################################################
-        # Possible actions the cartpole can take
-        # 0: push cart to left
-        # 1: push cart to right
         # self.action_space = np.array([-self.max_torque, self.max_torque], dtype=np.float32)
         # self.action_type = "Box"  # used in buffer to determine shape of memory
         # self.observation_space = self.upper_bound # to use in network for first layer input

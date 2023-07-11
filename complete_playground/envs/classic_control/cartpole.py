@@ -115,7 +115,7 @@ class CartPoleEnv(Env):
         # self.action_type = "Discrete"  # used in buffer to determine shape of memory
         # self.observation_space = self.upper_bound # to use in network for first layer input
         self.action_space = spaces.Discrete(2)
-        self.observation_space = spaces.Box(-self.lower_bound, self.upper_bound, dtype=np.float32)
+        self.observation_space = spaces.Box(self.lower_bound, self.upper_bound, dtype=np.float32)
         self.state = None
 
         ##################################################
@@ -139,7 +139,6 @@ class CartPoleEnv(Env):
         ##################################################
         # RESET EPISODIC VALUES
         ##################################################   
-        self.steps_beyond_terminated = None
         self.steps = 0
         self.episode_reward = 0
         self.episode_length = 0
@@ -160,17 +159,7 @@ class CartPoleEnv(Env):
 
         # check if episode ends due to termination and update reward accordingly
         terminated = self.check_termination(self.state)
-        if not terminated:
-            reward = 1.0
-        elif self.steps_beyond_terminated is None:
-            # Pole just fell!
-            self.steps_beyond_terminated = 0
-            reward = 1.0
-        else:
-            # arrives here only if terminated = True and steps_beyond_terminated is not None; call reset!
-            print('Make sure you call reset()')
-            self.steps_beyond_terminated += 1
-            reward = 0.0
+        reward = 1.0 if not terminated else 0.0
 
         # check truncation (episode ending due to time limit or some other reason not defined as part of the task MDP) 
         self.steps += 1

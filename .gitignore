@@ -4,6 +4,7 @@
 ### Module Specific ###
 runs/
 {run_name}
+fedetask/
 
 ### VisualStudioCode ###
 .vscode/*

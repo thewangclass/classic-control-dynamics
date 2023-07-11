@@ -25,6 +25,7 @@ class Env(Generic[ObsType, ActType]):
     # Set these in ALL subclasses
     action_space: spaces.Space[ActType]
     observation_space: spaces.Space[ObsType]
+    max_episode_steps: int | None = None
 
     def step(
         self, action: ActType

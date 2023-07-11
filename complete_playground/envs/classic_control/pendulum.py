@@ -5,9 +5,9 @@ from os import path
 from typing import Optional
 
 import numpy as np
-from complete_playground import spaces
+from complete_playground import Env, spaces
 
-class Pendulum():
+class PendulumEnv(Env):
     """
     ## Description
 
@@ -209,16 +209,3 @@ class Pendulum():
 
 def angle_normalize(x):
     return ((x + np.pi) % (2 * np.pi)) - np.pi
-
-
-
-if __name__ == '__main__':
-    env = Pendulum()
-    env.reset()
-    print("testing")
-    print("Current state: {}\n".format(env.state))
-
-    env.step(np.array([2]))
-    print("State after applying right action: {0}".format(env.state))
-    env.step(np.array([2]))
-    print("State after applying right action: {0}".format(env.state))

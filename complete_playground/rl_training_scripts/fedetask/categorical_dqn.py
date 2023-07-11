@@ -11,7 +11,7 @@ import torch
 import sys
 sys.path.append("/home/thewangclass/projects/classic-control-dynamics/")
 
-from complete_playground.envs import cartpole, acrobot
+from complete_playground.envs import cartpole, acrobot, mountain_car, pendulum
 import complete_playground.rl_training_scripts.fedetask.memory as memory
 from complete_playground.rl_training_scripts.fedetask.memory import Transition
 import complete_playground.rl_training_scripts.fedetask.networks as networks
@@ -197,9 +197,10 @@ if __name__ == '__main__':
     #############################################
     # Modified code section
     # env = cartpole.CartPole()
-    env = acrobot.Acrobot()
+    # env = acrobot.Acrobot()
+    env = pendulum.Pendulum()
     state_dim = env.observation_space.shape[0]
-    act_dim = len(env.action_space)       # env.action_space.n
+    act_dim = env.action_space.n
 
     #############################################
 

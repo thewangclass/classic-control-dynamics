@@ -6,7 +6,7 @@ import numpy as np
 from numpy import cos, pi, sin
 from complete_playground.envs.utils import wrap, bound
 from complete_playground import Env, spaces
-# from complete_playground.envs.utils import runge_kutta as rk4
+from complete_playground.envs.utils import runge_kutta as rk4
 
 __copyright__ = "Copyright 2013, RLPy http://acl.mit.edu/RLPy"
 __credits__ = [
@@ -169,6 +169,9 @@ class AcrobotEnv(Env):
     
     def step(self, action):
         # Make sure valid action and state are present
+        assert self.action_space.contains(
+            action[0]
+        ), f"{action!r} ({type(action)}) invalid"
         assert self.state is not None, "Call reset before step"
 
         # update state
@@ -177,15 +180,7 @@ class AcrobotEnv(Env):
             torque += self.np_random.uniform(
                 -self.torque_noise_max, self.torque_noise_max
             )        
-
-        ##################################################
-        # gymnasium code attempt
-        ##################################################   
-        s = self.state
-        s_augmented = np.append(s, torque)
-        ns = rk4(self._dsdt, s_augmented, [0, self.tau])
-        # ns = rk4(self.dynamics_acrobot, self.state, torque, self.tau)
-
+        ns = rk4(self.dynamics_acrobot, self.state, torque, self.tau)
         ns[0] = wrap(ns[0], -pi, pi)
         ns[1] = wrap(ns[1], -pi, pi)
         ns[2] = bound(ns[2], -self.max_vel_1, self.max_vel_1)
@@ -193,7 +188,7 @@ class AcrobotEnv(Env):
         self.state = ns
 
         # check if episode ends due to termination and update reward accordingly
-        terminated = self.check_termination()
+        terminated = self.check_termination(self.state)
         reward = -1.0 if not terminated else 0.0
 
         # check truncation
@@ -225,49 +220,6 @@ class AcrobotEnv(Env):
                 info['TimeLimit.truncated'] = True
 
         return np.array([self._get_ob()]), reward, terminated, truncated, info
-
-
-    def _dsdt(self, s_augmented):
-        m1 = self.link_mass_1
-        m2 = self.link_mass_2
-        l1 = self.link_length_1
-        lc1 = self.link_com_pos_1
-        lc2 = self.link_com_pos_2
-        I1 = self.link_moi
-        I2 = self.link_moi
-        g = self.gravity
-        a = s_augmented[-1]
-        s = s_augmented[:-1]
-        theta1 = s[0]
-        theta2 = s[1]
-        dtheta1 = s[2]
-        dtheta2 = s[3]
-        d1 = (
-            m1 * lc1**2
-            + m2 * (l1**2 + lc2**2 + 2 * l1 * lc2 * cos(theta2))
-            + I1
-            + I2
-        )
-        d2 = m2 * (lc2**2 + l1 * lc2 * cos(theta2)) + I2
-        phi2 = m2 * lc2 * g * cos(theta1 + theta2 - pi / 2.0)
-        phi1 = (
-            -m2 * l1 * lc2 * dtheta2**2 * sin(theta2)
-            - 2 * m2 * l1 * lc2 * dtheta2 * dtheta1 * sin(theta2)
-            + (m1 * lc1 + m2 * l1) * g * cos(theta1 - pi / 2)
-            + phi2
-        )
-        ddtheta2 = (
-            a + d2 / d1 * phi1 - m2 * l1 * lc2 * dtheta1**2 * sin(theta2) - phi2
-        ) / (m2 * lc2**2 + I2 - d2**2 / d1)
-        ddtheta1 = -(d2 * ddtheta2 + phi1) / d1
-        return dtheta1, dtheta2, ddtheta1, ddtheta2, 0.0
-    
-    def _get_ob(self):
-        s = self.state
-        assert s is not None, "Call reset before using AcrobotEnv object."
-        return np.array(
-            [cos(s[0]), sin(s[0]), cos(s[1]), sin(s[1]), s[2], s[3]], dtype=np.float32
-        )
     
     def dynamics_acrobot(self, current_state, action):
         m1 = self.link_mass_1
@@ -308,59 +260,16 @@ class AcrobotEnv(Env):
         return np.array([dtheta1, dtheta2, ddtheta1, ddtheta2], dtype=np.float32)
 
     
-    def check_termination(self):
+    def check_termination(self, state):
+        assert state is not None, "Call reset before using AcrobotEnv object."
+        return bool(-cos(state[0]) - cos(state[1] + state[0]) > 1.0)
+    
+    def _get_ob(self):
         s = self.state
         assert s is not None, "Call reset before using AcrobotEnv object."
-        return bool(-cos(s[0]) - cos(s[1] + s[0]) > 1.0)
-
-def rk4(derivs, y0, t):
-    """
-    Integrate 1-D or N-D system of ODEs using 4-th order Runge-Kutta.
-
-    Example for 2D system:
-
-        >>> def derivs(x):
-        ...     d1 =  x[0] + 2*x[1]
-        ...     d2 =  -3*x[0] + 4*x[1]
-        ...     return d1, d2
-
-        >>> dt = 0.0005
-        >>> t = np.arange(0.0, 2.0, dt)
-        >>> y0 = (1,2)
-        >>> yout = rk4(derivs, y0, t)
-
-    Args:
-        derivs: the derivative of the system and has the signature ``dy = derivs(yi)``
-        y0: initial state vector
-        t: sample times
-
-    Returns:
-        yout: Runge-Kutta approximation of the ODE
-    """
-
-    try:
-        Ny = len(y0)
-    except TypeError:
-        yout = np.zeros((len(t),), np.float_)
-    else:
-        yout = np.zeros((len(t), Ny), np.float_)
-
-    yout[0] = y0
-
-    for i in np.arange(len(t) - 1):
-
-        this = t[i]
-        dt = t[i + 1] - this
-        dt2 = dt / 2.0
-        y0 = yout[i]
-
-        k1 = np.asarray(derivs(y0))
-        k2 = np.asarray(derivs(y0 + dt2 * k1))
-        k3 = np.asarray(derivs(y0 + dt2 * k2))
-        k4 = np.asarray(derivs(y0 + dt * k3))
-        yout[i + 1] = y0 + dt / 6.0 * (k1 + 2 * k2 + 2 * k3 + k4)
-    # We only care about the final timestep and we cleave off action value which will be zero
-    return yout[-1][:4]
+        return np.array(
+            [cos(s[0]), sin(s[0]), cos(s[1]), sin(s[1]), s[2], s[3]], dtype=np.float32
+    )
 
 if __name__ == '__main__':
     abot = AcrobotEnv()

@@ -9,6 +9,46 @@ python3 complete_playground/rl_training_scripts/c51.py --env-id Cartpole-v1 --to
 
 ## Currently Working On
 
+### Box Space -> Discrete Space
+Some algorithms only work for discrete spaces. Could we convert a Box space to a Discrete space?
+Could we discretize the continuous Box Space?
+
+Example: Continuous_MountainCarEnv
+Box -> Discrete
+Action space is 1D, ranging from -1 to 1. 
+Shape is (1,)
+Let n = 100.
+Subdivide -1 to 1 into n discrete steps. 
+Let action space = Discrete(n). 
+n would have to be >= 2 (to account for the lower and upper range)
+
+Example: PendulumEnv
+Box -> Discrete
+Action space is 1D, ranging from 2 to 2.
+Shape is (1,)
+Let n = 100.
+Subdivide -2 to 2 into n discrete steps.
+Let action space = Discrete(n).
+
+Example: quadrotor_2D
+Box -> Discrete.
+Action space is 2D, with thrust on each propeller ranging from -constant to constant.
+Shape is (2,). [[-constant, constant], [-constant, constant]]. 
+Let n = 100.
+Either divide n by shape[0] which equals 10. Then for each variable in the array, you divide it by that amount (10). Action 0 would correspond with -constant, -constant. Action 100 would correspond with constant, constant.
+Would need to create tuples (left, right) to represent this. 
+OR
+Create environment as 9 possible actions.
+Left: Down Right: Down
+Left: Down Right: Neutral
+Left: Down Right: Up
+Left: Neutral Right: Down
+Left: Neutral Right: Neutral
+Left: Neutral Right: Up 
+Left: Up Right: Down
+Left: Up Right: Neutral
+Left: Up Right: Up
+
 ### Reset.
 VecEnv resets automatically when a done signal is encountered. 
 Where should we reset? At the end of the episode, we should call reset. 
@@ -23,6 +63,19 @@ https://github.com/DLR-RM/stable-baselines3/blob/master/stable_baselines3/common
 This is from sb3 vec_env -> vec_normalize.py file. 
 https://github.com/DLR-RM/stable-baselines3/blob/master/stable_baselines3/common/vec_env/vec_normalize.py
 Maybe acrobot requires this?
+===
+Gymnasium (save and return normalized results, original data lost)
+create RunningMeanStd for obs and returns in init of each environment (or in algo? or in acrobot only?)
+in step, do all the calculations, then right before return, normalize everything
+https://github.com/Farama-Foundation/Gymnasium/blob/9bc0bf308dcb5b2baead896e91fa6b3170b2405d/gymnasium/wrappers/normalize.py
+
+SB3 (keeps underlying data, returns normalized results)
+ReplayBuffer -> 
+relies on BaseBuffer with the _normalize_obs and _normalize_reward ->
+calls upon normalize_obs and normalize_reward from VecEnv/VecNormalize class, which is Wrapper -> 
+if not dictionary then calls _normalize_obs in VecNormalize class, which uses a common/RunningMeanStd -> 
+created line 54/68 of VecNormalize (dict or not) for observations and line 85 for returns ->
+which are updated in 171 step_wait on line 185/187, and then normalized again
 
 ### Infos, rewards
 Look at Wrappers -> RecordEpisodeStatistics

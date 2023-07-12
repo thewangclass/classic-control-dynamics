@@ -230,7 +230,7 @@ class AcrobotEnv(Env):
         I1 = self.link_moi
         I2 = self.link_moi
         g = self.gravity
-        a = action
+        a = action[0]
         s = current_state
 
         theta1 = s[0]

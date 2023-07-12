@@ -100,7 +100,6 @@ class MountainCarEnv(Env):
         ##################################################
         # EPISODE ENDING
         ##################################################
-        self.max_episode_steps = 200
         self.steps = 0
 
         self.min_position = -1.2

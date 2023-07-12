@@ -514,13 +514,18 @@ def make(
     # No api comptability application
     ####################
 
+    # example: env is complete_playground.envs.classic_control.cartpole.CartPoleEnv object
     env = env_creator()     # may need to come back to this to allow for kwargs
 
     ####################
     # No wrappers
     ####################
 
-    if env_spec.max_episode_steps is not None:
+    # first check if user wants to use own max_episode_steps
+    if max_episode_steps is not None:
+        env.max_episode_steps = max_episode_steps
+    # assign max_episode_steps if present in register
+    elif env_spec.max_episode_steps is not None:
         env.max_episode_steps = env_spec.max_episode_steps
     return env
 

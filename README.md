@@ -4,11 +4,27 @@ Complete Playground is a lightweight Python module for creating and testing your
 ## Sample Run
 Use the following command in bash to try it out. Currently hard-coded for CartPole.
 '''bash
-python3 complete_playground/rl_training_scripts/c51.py --save-model True --total-timesteps 200000
+python3 complete_playground/rl_training_scripts/c51.py --env-id Cartpole-v1 --total-timesteps 500000 
 '''
 
 ## Currently Working On
-Infos, rewards
+
+### Reset.
+VecEnv resets automatically when a done signal is encountered. 
+Where should we reset? At the end of the episode, we should call reset. 
+https://github.com/Farama-Foundation/Gymnasium/blob/9bc0bf308dcb5b2baead896e91fa6b3170b2405d/gymnasium/vector/vector_env.py
+https://github.com/Farama-Foundation/Gymnasium/blob/9bc0bf308dcb5b2baead896e91fa6b3170b2405d/gymnasium/wrappers/autoreset.py
+https://colab.research.google.com/github/araffin/rl-tutorial-jnrr19/blob/sb3/5_custom_gym_env.ipynb#scrollTo=rYzDXA9vJfz1
+
+### Normalizing observations + rewards
+sb3 ReplayBuffers normalizes the observations and rewards when sampling is done.
+This is inherited from parent buffer class, which calls the env.normalize_obs (or env.normalize_reward).
+https://github.com/DLR-RM/stable-baselines3/blob/master/stable_baselines3/common/buffers.py#L144
+This is from sb3 vec_env -> vec_normalize.py file. 
+https://github.com/DLR-RM/stable-baselines3/blob/master/stable_baselines3/common/vec_env/vec_normalize.py
+Maybe acrobot requires this?
+
+### Infos, rewards
 Look at Wrappers -> RecordEpisodeStatistics
 https://github.com/Farama-Foundation/Gymnasium/blob/9bc0bf308dcb5b2baead896e91fa6b3170b2405d/gymnasium/wrappers/record_episode_statistics.py
 
@@ -35,7 +51,7 @@ Example values:
 't': np.ndarray, array([4.043945], dtype=float32): ???
 
 ## Ongoing Issues
-Acrobot does not work.
+### Acrobot does not work.
 Possible reasons: 
 - Acrobot itself is coded wrong 
     - unlikely, have my own implementation and pretty much copy+pasted the acrobot from gymnasium
@@ -50,17 +66,3 @@ Possible reasons:
         - If this fails, then not just an acrobot problem but something to do with high truncation to termination
     - This relates to the other bullet points, namely reset() returning an observation that should be assigned to state, infos['final_observation'], and buffer
 
-ModuleNotFoundError. Look in c51.py and you will see the current workaround of appending to sys.path. Alternatives to add this on the Python path is to do it at the command line or export to the shell configuration. See (stackoverflow)[https://stackoverflow.com/questions/5875810/importerror-when-trying-to-import-a-custom-module-in-python].
-
-Reset.
-VecEnv resets automatically when a done signal is encountered. 
-Where should we reset? At the end of the episode, we should call reset. 
-https://github.com/Farama-Foundation/Gymnasium/blob/9bc0bf308dcb5b2baead896e91fa6b3170b2405d/gymnasium/vector/vector_env.py
-https://github.com/Farama-Foundation/Gymnasium/blob/9bc0bf308dcb5b2baead896e91fa6b3170b2405d/gymnasium/wrappers/autoreset.py
-https://colab.research.google.com/github/araffin/rl-tutorial-jnrr19/blob/sb3/5_custom_gym_env.ipynb#scrollTo=rYzDXA9vJfz1
-
-Normalizing observations + rewards
-sb3 ReplayBuffers normalizes the observations and rewards when sampling is done.
-This is inherited from parent buffer class, which calls the env.normalize_obs (or env.normalize_reward).
-This is from sb3 vec_env -> vec_normalize.py file. 
-Maybe acrobot requires this?

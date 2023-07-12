@@ -2,10 +2,8 @@
 Classic cart-pole system implemented by Rich Sutton et al.
 Framework from: https://github.com/Farama-Foundation/Gymnasium/blob/main/gymnasium/envs/classic_control/acrobot.py
 """
-import sys
-sys.path.append("/home/thewangclass/projects/classic-control-dynamics/")
 import numpy as np
-from math import cos, pi, sin
+from numpy import cos, pi, sin
 from complete_playground.envs.utils import wrap, bound
 from complete_playground import Env, spaces
 # from complete_playground.envs.utils import runge_kutta as rk4
@@ -98,7 +96,6 @@ class AcrobotEnv(Env):
         ##################################################
         # EPISODE ENDING
         ##################################################
-        self.max_episode_steps = 500 # going over this causes truncation
         self.steps = 0
 
         # constraints
@@ -138,9 +135,8 @@ class AcrobotEnv(Env):
         # 0: apply -1 torque to the actuated joint
         # 1: apply 0 torque to the actuated joint
         # 2: apply 1 torque to the actuated joint
-        self.action_space = {0, 1, 2}
-        self.action_type = "Discrete"
-        self.observation_space = self.upper_bound
+        self.action_space = spaces.Discrete(3)
+        self.observation_space = spaces.Box(low=self.lower_bound, high=self.upper_bound, dtype=np.float32)
         self.state = None
 
         ##################################################

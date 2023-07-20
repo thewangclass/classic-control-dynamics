@@ -1,14 +1,33 @@
 # Complete Playground
-Complete Playground is a lightweight Python module for creating and testing your own Classic Control problems. 
+Complete Playground is a lightweight Python module for creating and testing your own Classic Control problems. It is meant to be well-documented and flexible, making it easy to implement your own learning algorithms and classical control environments. 
+
+Complete Playground draws the majority of its own code from [Gymnasium](https://github.com/Farama-Foundation/Gymnasium). One major update of gymnasium is detailing the difference between termination and truncation in the reinforcement learning process. Gymnasium also heavily relies on wrappers for additional functionality. Complete Playground currently does not support rendering, which Gymnasium does.
+Many of the reinforcement learning algorithms come from the deep reinforcement learning library [CleanRL](https://github.com/vwxyzjn/cleanrl); however, work has been done to extensively comment each section to make it understandable for someone with a beginner's understanding of reinforcement learning. 
+Additional code, such as the ReplayBuffer, comes from another reinforcement learning library [Stable Baselines3](https://github.com/DLR-RM/stable-baselines3). 
+
+
+## Importing the Code
+To import the code, navigate to the folder you want the project in. Then, clone the git repository using the following command: 
+```bash
+git clone https://github.com/fedetask/categorical-dqn.git
+```
 
 ## Sample Run
-Use the following command in bash to try it out. Currently hard-coded for CartPole.
-'''bash
+```bash
 python3 complete_playground/rl_training_scripts/c51.py --env-id Cartpole-v1 --total-timesteps 500000 
-'''
+```
+
+This will run the train the Cartpole environment using the c51 reinforcement learning algorithm for a total of 500K timesteps.
+Other additional arguments can be found in each reinforcement learning algorithm script. 
+
+## How to Add Your Own Environment
+There are primarily two locations to pay attention to.
+The environment you create should be placed in complete_playground/envs. 
+Register your environment in complete_playground/envs/__init__.py, following the format provided.
+
+Make sure your environment inherits from the Env class. This means it must implement step() and reset().
 
 ## Currently Working On
-
 ### Box Space -> Discrete Space
 Some algorithms only work for discrete spaces. Could we convert a Box space to a Discrete space?
 Could we discretize the continuous Box Space?
@@ -63,7 +82,7 @@ https://github.com/DLR-RM/stable-baselines3/blob/master/stable_baselines3/common
 This is from sb3 vec_env -> vec_normalize.py file. 
 https://github.com/DLR-RM/stable-baselines3/blob/master/stable_baselines3/common/vec_env/vec_normalize.py
 Maybe acrobot requires this?
-===
+
 Gymnasium (save and return normalized results, original data lost)
 create RunningMeanStd for obs and returns in init of each environment (or in algo? or in acrobot only?)
 in step, do all the calculations, then right before return, normalize everything
@@ -102,6 +121,9 @@ Example values:
 'r': np.ndarray, array([13.], dtype=float32): return
 'l': np.ndarray, array([13.], dtype=int32): length
 't': np.ndarray, array([4.043945], dtype=float32): ???
+
+### Autotesting
+When modifying an environment, reinforcement learning algo, buffer, or other component, there should be a way to test the change and see if it is compatible with everything else. 
 
 ## Ongoing Issues
 ### Acrobot does not work.
